@@ -881,6 +881,38 @@
                 e.preventDefault();
                 logoutAdmin();
             }
+            // Добавьте эти функции в существующий скрипт admin.html:
+
+// Закрытие модального окна при клике вне его
+document.addEventListener('DOMContentLoaded', function() {
+    // Закрытие модалки при клике вне ее
+    document.addEventListener('click', function(event) {
+        const modal = document.getElementById('passwordModal');
+        const modalContent = document.querySelector('.modal-content');
+        
+        if (modal && modal.style.display === 'flex') {
+            // Если клик вне контента модалки
+            if (!modalContent.contains(event.target)) {
+                closePasswordModal();
+            }
+        }
+    });
+    
+    // Закрытие по Escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closePasswordModal();
+            closeExportModal();
+        }
+    });
+});
+
+// Функция для автоматического входа (для тестирования)
+function autoLogin() {
+    // Для тестирования - автоматический вход
+    localStorage.setItem('admin_authenticated', CONFIG.ADMIN_PASSWORD);
+    showAdminInterface();
+}
         });
     </script>
 </body>
