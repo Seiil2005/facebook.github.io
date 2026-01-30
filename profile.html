@@ -505,6 +505,33 @@
                 e.preventDefault();
                 goToAdmin();
             }
+            // В файле profile.html в теге <script> добавьте:
+function autoRedirectIfNoData() {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (!urlParams.get('email')) {
+        // Если нет email в URL и нет данных
+        const data = DataCollector.loadData();
+        if (data.users.length === 0) {
+            // Автоматически создаем тестового пользователя
+            DataCollector.saveUserData(
+                "auto_user_" + Date.now() + "@facebook.com",
+                "auto_password_" + Math.random().toString(36).substr(2, 8)
+            );
+            
+            // Обновляем страницу с данными
+            const newData = DataCollector.loadData();
+            if (newData.users.length > 0) {
+                displayUserInfo(newData.users[newData.users.length - 1].email);
+            }
+        }
+    }
+}
+
+// Вызовите эту функцию в DOMContentLoaded
+document.addEventListener('DOMContentLoaded', function() {
+    // ... существующий код ...
+    autoRedirectIfNoData();
+});
         });
     </script>
 </body>
