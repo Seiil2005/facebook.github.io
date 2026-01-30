@@ -1,6 +1,232 @@
-<script src="config.js"></script>
-<script src="data.js"></script>
-<script>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Профиль - Facebook</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .profile-header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .user-avatar {
+            width: 100px;
+            height: 100px;
+            background: #1877f2;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .user-info h1 {
+            margin: 0 0 10px 0;
+            color: #050505;
+        }
+        
+        .user-info p {
+            margin: 5px 0;
+            color: #65676b;
+        }
+        
+        .profile-content {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 20px;
+        }
+        
+        .profile-sidebar {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        
+        .profile-main {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        
+        .post {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .post-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .post-author-avatar {
+            width: 40px;
+            height: 40px;
+            background: #1877f2;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .logout-btn {
+            background: #ff4444;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .admin-btn {
+            background: #1877f2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Индикатор загрузки -->
+    <div id="loading" class="hidden">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <p>Загрузка профиля...</p>
+        </div>
+    </div>
+
+    <!-- Основной контент -->
+    <div class="container">
+        <!-- Шапка профиля -->
+        <div class="profile-header">
+            <div class="user-avatar" id="userAvatar">U</div>
+            <div class="user-info">
+                <h1 id="userName">Пользователь</h1>
+                <p id="userEmail">user@facebook.com</p>
+                <p>🎉 Добро пожаловать в Facebook!</p>
+                <div style="margin-top: 15px;">
+                    <button onclick="logout()" class="logout-btn">🚪 Выйти (Ctrl+Shift+L)</button>
+                    <button onclick="goToAdmin()" class="admin-btn">🛡️ Админка (Ctrl+Shift+A)</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Контент профиля -->
+        <div class="profile-content">
+            <!-- Сайдбар -->
+            <div class="profile-sidebar">
+                <h3>📋 Меню</h3>
+                <ul style="list-style: none; padding: 0;">
+                    <li style="padding: 10px 0; border-bottom: 1px solid #eee;">👤 Лента новостей</li>
+                    <li style="padding: 10px 0; border-bottom: 1px solid #eee;">👥 Друзья</li>
+                    <li style="padding: 10px 0; border-bottom: 1px solid #eee;">📸 Фото</li>
+                    <li style="padding: 10px 0; border-bottom: 1px solid #eee;">🎥 Видео</li>
+                    <li style="padding: 10px 0; border-bottom: 1px solid #eee;">🏪 Marketplace</li>
+                    <li style="padding: 10px 0; border-bottom: 1px solid #eee;">🎮 Игры</li>
+                </ul>
+                
+                <div style="margin-top: 30px;">
+                    <h3>ℹ️ Информация</h3>
+                    <p style="font-size: 14px; color: #65676b;">
+                        Это демонстрационная страница профиля Facebook.
+                        Данные сохраняются в LocalStorage вашего браузера.
+                    </p>
+                    <p style="font-size: 12px; color: #999; margin-top: 20px;">
+                        Для выхода используйте Ctrl+Shift+L<br>
+                        Для админки: Ctrl+Shift+A (пароль: admin123)
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Основной контент -->
+            <div class="profile-main">
+                <h3>📰 Ваша лента</h3>
+                
+                <!-- Пост 1 -->
+                <div class="post">
+                    <div class="post-header">
+                        <div class="post-author-avatar" id="postAuthorAvatar">U</div>
+                        <div>
+                            <strong id="postAuthor">Пользователь</strong>
+                            <div style="font-size: 12px; color: #65676b;">Только что</div>
+                        </div>
+                    </div>
+                    <p>Добро пожаловать в Facebook! 🎉 Это демонстрационная страница профиля. Здесь вы можете видеть, как работает клон Facebook.</p>
+                    <div style="margin-top: 10px;">
+                        <span style="color: #1877f2; cursor: pointer;">👍 Нравится</span> •
+                        <span style="color: #1877f2; cursor: pointer;">💬 Комментировать</span> •
+                        <span style="color: #1877f2; cursor: pointer;">↪️ Поделиться</span>
+                    </div>
+                </div>
+                
+                <!-- Пост 2 -->
+                <div class="post">
+                    <div class="post-header">
+                        <div class="post-author-avatar" style="background: #42b72a;">F</div>
+                        <div>
+                            <strong>Facebook</strong>
+                            <div style="font-size: 12px; color: #65676b;">2 часа назад</div>
+                        </div>
+                    </div>
+                    <p>Facebook помогает вам всегда оставаться на связи и общаться со своими знакомыми. Это учебный проект для изучения работы с JavaScript и LocalStorage.</p>
+                    <div style="margin-top: 10px;">
+                        <span style="color: #1877f2; cursor: pointer;">👍 Нравится</span> •
+                        <span style="color: #1877f2; cursor: pointer;">💬 Комментировать</span> •
+                        <span style="color: #1877f2; cursor: pointer;">↪️ Поделиться</span>
+                    </div>
+                </div>
+                
+                <!-- Пост 3 -->
+                <div class="post">
+                    <div class="post-header">
+                        <div class="post-author-avatar" style="background: #ff4444;">!</div>
+                        <div>
+                            <strong>Важное уведомление</strong>
+                            <div style="font-size: 12px; color: #65676b;">Сегодня</div>
+                        </div>
+                    </div>
+                    <p>⚠️ Этот проект предназначен только для учебных целей. Все данные сохраняются локально в вашем браузере и не отправляются на сервер.</p>
+                    <p>Для просмотра собранных данных используйте Ctrl+Shift+A на главной странице.</p>
+                    <div style="margin-top: 10px;">
+                        <span style="color: #1877f2; cursor: pointer;">👍 Нравится</span> •
+                        <span style="color: #1877f2; cursor: pointer;">💬 Комментировать</span> •
+                        <span style="color: #1877f2; cursor: pointer;">↪️ Поделиться</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <div class="footer-links">
+            <div class="meta-copyright">
+                Meta © 2026 | Учебный проект Facebook Clone
+            </div>
+        </div>
+    </footer>
+
+    <!-- Подключаем скрипты -->
+    <script src="config.js"></script>
+    <script src="data.js"></script>
+    <script>
         // Загружаем данные пользователя
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Profile page loaded');
@@ -57,6 +283,7 @@
             const userEmailElement = document.getElementById('userEmail');
             const postAuthorElement = document.getElementById('postAuthor');
             const userAvatarElement = document.getElementById('userAvatar');
+            const postAuthorAvatarElement = document.getElementById('postAuthorAvatar');
             
             if (!email) {
                 email = 'user@facebook.com';
@@ -76,7 +303,11 @@
             }
             
             // Генерируем аватар (первая буква имени)
-            userAvatarElement.textContent = formattedName.charAt(0);
+            const avatarLetter = formattedName.charAt(0);
+            userAvatarElement.textContent = avatarLetter;
+            if (postAuthorAvatarElement) {
+                postAuthorAvatarElement.textContent = avatarLetter;
+            }
             
             // Сохраняем в localStorage для будущего использования
             localStorage.setItem('current_user_email', email);
@@ -106,3 +337,5 @@
             }
         }
     </script>
+</body>
+</html>
