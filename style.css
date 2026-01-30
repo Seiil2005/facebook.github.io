@@ -1,0 +1,285 @@
+/* Основные стили Facebook */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Helvetica, Arial, sans-serif;
+}
+
+body {
+    background-color: #f0f2f5;
+    color: #1c1e21;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.container {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 20px;
+    min-height: 640px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex: 1;
+}
+
+/* Секция с логотипом */
+.logo-section {
+    padding-top: 80px;
+    padding-right: 32px;
+    width: 580px;
+}
+
+.logo {
+    height: 106px;
+    margin: -28px;
+}
+
+.logo-section h2 {
+    font-size: 28px;
+    font-weight: normal;
+    line-height: 32px;
+    width: 500px;
+    margin-top: 20px;
+}
+
+/* Форма входа */
+.login-form {
+    width: 396px;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, .1), 0 8px 16px rgba(0, 0, 0, .1);
+    text-align: center;
+}
+
+.form-group {
+    margin-bottom: 12px;
+}
+
+input {
+    width: 100%;
+    padding: 14px 16px;
+    font-size: 17px;
+    border: 1px solid #dddfe2;
+    border-radius: 6px;
+    color: #1d2129;
+}
+
+input:focus {
+    outline: none;
+    border-color: #1877f2;
+    box-shadow: 0 0 0 2px #e7f3ff;
+}
+
+/* Кнопки */
+.login-btn {
+    background-color: #1877f2;
+    border: none;
+    border-radius: 6px;
+    font-size: 20px;
+    line-height: 48px;
+    padding: 0 16px;
+    width: 100%;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    margin-bottom: 16px;
+    transition: background-color 0.3s;
+}
+
+.login-btn:hover {
+    background-color: #166fe5;
+}
+
+.forgot-link {
+    color: #1877f2;
+    font-size: 14px;
+    text-decoration: none;
+    border-bottom: 1px solid #dddfe2;
+    padding-bottom: 16px;
+    display: block;
+    margin-bottom: 20px;
+}
+
+.forgot-link:hover {
+    text-decoration: underline;
+}
+
+.create-btn {
+    background-color: #42b72a;
+    border: none;
+    border-radius: 6px;
+    font-size: 17px;
+    line-height: 48px;
+    padding: 0 16px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    display: inline-block;
+    text-decoration: none;
+    transition: background-color 0.3s;
+    width: 100%;
+}
+
+.create-btn:hover {
+    background-color: #36a420;
+}
+
+hr {
+    border: none;
+    border-top: 1px solid #dadde1;
+    margin: 20px 0;
+}
+
+.create-page {
+    margin-top: 28px;
+    font-size: 14px;
+    text-align: center;
+    color: #1c1e21;
+}
+
+.create-page a {
+    color: #1c1e21;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.create-page a:hover {
+    text-decoration: underline;
+}
+
+/* Футер */
+footer {
+    background-color: white;
+    padding: 20px 0;
+    margin-top: 60px;
+    border-top: 1px solid #dddfe2;
+}
+
+.footer-links {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 0 20px;
+    font-size: 12px;
+    color: #8a8d91;
+}
+
+.languages {
+    margin-bottom: 20px;
+}
+
+.languages a {
+    color: #8a8d91;
+    text-decoration: none;
+    margin-right: 12px;
+    line-height: 1.6;
+}
+
+.languages a:hover {
+    text-decoration: underline;
+}
+
+.more-languages {
+    background: #f5f6f7;
+    border: 1px solid #ccd0d5;
+    padding: 0 8px;
+    border-radius: 2px;
+}
+
+.footer-menu {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 16px 0;
+    border-top: 1px solid #dddfe2;
+    padding-top: 20px;
+}
+
+.footer-menu a {
+    color: #8a8d91;
+    text-decoration: none;
+}
+
+.footer-menu a:hover {
+    text-decoration: underline;
+}
+
+.meta-copyright {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #dddfe2;
+}
+
+/* Индикатор загрузки */
+#loading {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    z-index: 9999;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.loading-content {
+    text-align: center;
+}
+
+.spinner {
+    border: 4px solid rgba(255,255,255,0.3);
+    border-top: 4px solid #1877f2;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Админ ссылка (скрытая) */
+.admin-link {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    opacity: 0.01;
+}
+
+/* Адаптивность */
+@media (max-width: 900px) {
+    .container {
+        flex-direction: column;
+        text-align: center;
+        padding: 40px 20px;
+    }
+    
+    .logo-section {
+        padding: 0;
+        width: 100%;
+    }
+    
+    .logo-section h2 {
+        width: 100%;
+        font-size: 24px;
+    }
+    
+    .login-form {
+        width: 100%;
+        max-width: 400px;
+        margin-top: 40px;
+    }
+}
