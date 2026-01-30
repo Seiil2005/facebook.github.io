@@ -497,48 +497,88 @@
         }
         
         // Загрузка данных в админку
-        function loadAdminData() {
-            console.log('loadAdminData вызвана');
-            
-            if (!window.DataCollector) {
-                console.error('DataCollector не доступен');
-                return;
-            }
-            
-            try {
-                const data = DataCollector.loadData();
-                const stats = DataCollector.getStats();
-                
-                console.log('Данные загружены:', {
-                    users: data.users.length,
-                    visits: data.visits.length,
-                    stats: stats
-                });
-                
-                // Обновляем статистику
-                document.getElementById('totalUsers').textContent = stats.totalUsers;
-                document.getElementById('todayLogins').textContent = getTodayLogins(data.users);
-                document.getElementById('uniqueIPs').textContent = stats.uniqueIPs;
-                document.getElementById('lastLogin').textContent = stats.lastLogin;
-                
-                // Обновляем таблицу
-                updateTable(data.users);
-                
-                // Обновляем аналитику
-                updateAnalytics(data.users);
-                
-                // Скрываем лоадер
-                const loader = document.getElementById('loader');
-                if (loader) loader.style.display = 'none';
-                
-            } catch (error) {
-                console.error('Ошибка в loadAdminData:', error);
-                document.getElementById('totalUsers').textContent = 'Ошибка';
-                document.getElementById('todayLogins').textContent = 'Ошибка';
-                document.getElementById('uniqueIPs').textContent = 'Ошибка';
-                document.getElementById('lastLogin').textContent = 'Ошибка';
-            }
+       // Загрузка данных в админку - ИСПРАВЛЕННАЯ
+function loadAdminData() {
+    console.log('🔄 loadAdminData вызвана');
+    
+    if (!window.DataCollector) {
+        console.error('❌ DataCollector не доступен');
+        document.getElementById('totalUsers').textContent = 'Ошибка';
+        document.getElementById('todayLogins').textContent = 'Ошибка';
+        document.getElementById('uniqueIPs').textContent = 'Ошибка';
+        document.getElementById('lastLogin').textContent = 'Ошибка';
+        return;
+    }
+    
+    try {
+        // Загружаем данные
+        const data = DataCollector.loadData();
+        console.log('📥 Данные загружены:', {
+            users: data.users?.length || 0,
+            hasUsers: Array.isArray(data.users)
+        });
+        
+        // Получаем статистику
+        const stats = DataCollector.getStats();
+        console.log('📊 Статистика получена:', stats);
+        
+        // Обновляем статистику на странице
+        document.getElementById('totalUsers').textContent = stats.totalUsers;
+        document.getElementById('uniqueIPs').textContent = stats.uniqueIPs;
+        document.getElementById('lastLogin').textContent = stats.lastLogin;
+        
+        // Сегодняшние входы
+        const todayLogins = DataCollector.getTodayLogins ? 
+            DataCollector.getTodayLogins() : 
+            (data.users || []).filter(user => {
+                try {
+                    const userDate = new Date(user.timestamp).toDateString();
+                    return userDate === new Date().toDateString();
+                } catch(e) { return false; }
+            }).length;
+        
+        document.getElementById('todayLogins').textContent = todayLogins;
+        
+        // Обновляем таблицу
+        updateTable(data.users || []);
+        
+        // Обновляем аналитику
+        updateAnalytics(data.users || []);
+        
+        // Обновляем счетчик
+        const dataCount = document.getElementById('dataCount');
+        if (dataCount) {
+            dataCount.textContent = `${data.users?.length || 0} записей (сегодня: ${todayLogins})`;
         }
+        
+        // Скрываем лоадер
+        const loader = document.getElementById('loader');
+        if (loader) loader.style.display = 'none';
+        
+        console.log('✅ Админка обновлена');
+        
+    } catch (error) {
+        console.error('❌ Ошибка в loadAdminData:', error);
+        
+        // Показываем ошибку в интерфейсе
+        document.getElementById('totalUsers').textContent = '0';
+        document.getElementById('todayLogins').textContent = '0';
+        document.getElementById('uniqueIPs').textContent = '0';
+        document.getElementById('lastLogin').textContent = 'Ошибка';
+        
+        // Показываем сообщение
+        const tableBody = document.getElementById('tableBody');
+        if (tableBody) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="8" style="text-align: center; padding: 50px; color: #ff4444;">
+                        ❌ Ошибка загрузки данных: ${error.message}
+                    </td>
+                </tr>
+            `;
+        }
+    }
+}
         
         // Получить количество входов сегодня
         function getTodayLogins(users) {
