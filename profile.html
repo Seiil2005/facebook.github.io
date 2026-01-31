@@ -3,23 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Профиль - Facebook</title>
+    <title>Профиль - Facebook Clone</title>
     <link rel="stylesheet" href="style.css">
     <style>
         .profile-header {
             background: white;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 25px;
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 25px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
         }
         
         .user-avatar {
-            width: 100px;
-            height: 100px;
-            background: #1877f2;
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, #1877f2, #0d5fbf);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -27,11 +28,13 @@
             font-size: 48px;
             color: white;
             font-weight: bold;
+            box-shadow: 0 5px 15px rgba(24, 119, 242, 0.3);
         }
         
         .user-info h1 {
             margin: 0 0 10px 0;
             color: #050505;
+            font-size: 32px;
         }
         
         .user-info p {
@@ -41,66 +44,145 @@
         
         .profile-content {
             display: grid;
-            grid-template-columns: 300px 1fr;
-            gap: 20px;
+            grid-template-columns: 280px 1fr;
+            gap: 25px;
         }
         
         .profile-sidebar {
             background: white;
-            padding: 20px;
-            border-radius: 8px;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
         }
         
         .profile-main {
             background: white;
-            padding: 20px;
-            border-radius: 8px;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
         }
         
         .post {
-            margin-bottom: 20px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid #ddd;
+            margin-bottom: 25px;
+            padding-bottom: 25px;
+            border-bottom: 1px solid #e4e6eb;
+        }
+        
+        .post:last-child {
+            border-bottom: none;
         }
         
         .post-header {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 15px;
             margin-bottom: 15px;
         }
         
         .post-author-avatar {
-            width: 40px;
-            height: 40px;
-            background: #1877f2;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #1877f2, #0d5fbf);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
             font-weight: bold;
+            font-size: 20px;
+        }
+        
+        .post-actions {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+        }
+        
+        .post-action {
+            color: #65676b;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: color 0.3s;
+        }
+        
+        .post-action:hover {
+            color: #1877f2;
         }
         
         .logout-btn {
             background: #ff4444;
             color: white;
             border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
+            padding: 12px 25px;
+            border-radius: 8px;
             cursor: pointer;
-            font-weight: 600;
+            font-weight: bold;
+            transition: all 0.3s;
+            margin-top: 15px;
+        }
+        
+        .logout-btn:hover {
+            background: #dd3333;
+            transform: translateY(-2px);
         }
         
         .admin-btn {
             background: #1877f2;
             color: white;
             border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
+            padding: 12px 25px;
+            border-radius: 8px;
             cursor: pointer;
-            font-weight: 600;
+            font-weight: bold;
+            transition: all 0.3s;
+            margin-top: 15px;
             margin-left: 10px;
+        }
+        
+        .admin-btn:hover {
+            background: #166fe5;
+            transform: translateY(-2px);
+        }
+        
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 20px 0;
+        }
+        
+        .sidebar-menu li {
+            padding: 12px 0;
+            border-bottom: 1px solid #e4e6eb;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .sidebar-menu li:hover {
+            padding-left: 10px;
+            color: #1877f2;
+        }
+        
+        .sidebar-menu li:last-child {
+            border-bottom: none;
+        }
+        
+        @media (max-width: 900px) {
+            .profile-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .profile-header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .user-avatar {
+                width: 100px;
+                height: 100px;
+                font-size: 36px;
+            }
         }
     </style>
 </head>
@@ -121,8 +203,8 @@
             <div class="user-info">
                 <h1 id="userName">Пользователь</h1>
                 <p id="userEmail">user@facebook.com</p>
-                <p>🎉 Добро пожаловать в Facebook!</p>
-                <div style="margin-top: 15px;">
+                <p>🎉 Добро пожаловать в Facebook Clone v4.0!</p>
+                <div style="margin-top: 20px;">
                     <button onclick="logout()" class="logout-btn">🚪 Выйти (Ctrl+Shift+L)</button>
                     <button onclick="goToAdmin()" class="admin-btn">🛡️ Админка (Ctrl+Shift+A)</button>
                 </div>
@@ -134,24 +216,28 @@
             <!-- Сайдбар -->
             <div class="profile-sidebar">
                 <h3>📋 Меню</h3>
-                <ul style="list-style: none; padding: 0;">
-                    <li style="padding: 10px 0; border-bottom: 1px solid #eee;">👤 Лента новостей</li>
-                    <li style="padding: 10px 0; border-bottom: 1px solid #eee;">👥 Друзья</li>
-                    <li style="padding: 10px 0; border-bottom: 1px solid #eee;">📸 Фото</li>
-                    <li style="padding: 10px 0; border-bottom: 1px solid #eee;">🎥 Видео</li>
-                    <li style="padding: 10px 0; border-bottom: 1px solid #eee;">🏪 Marketplace</li>
-                    <li style="padding: 10px 0; border-bottom: 1px solid #eee;">🎮 Игры</li>
+                <ul class="sidebar-menu">
+                    <li>👤 Лента новостей</li>
+                    <li>👥 Друзья</li>
+                    <li>📸 Фото</li>
+                    <li>🎥 Видео</li>
+                    <li>🏪 Marketplace</li>
+                    <li>🎮 Игры</li>
+                    <li>💼 Вакансии</li>
+                    <li>🏢 Группы</li>
                 </ul>
                 
                 <div style="margin-top: 30px;">
                     <h3>ℹ️ Информация</h3>
-                    <p style="font-size: 14px; color: #65676b;">
-                        Это демонстрационная страница профиля Facebook.
-                        Данные сохраняются в LocalStorage вашего браузера.
+                    <p style="font-size: 14px; color: #65676b; line-height: 1.5;">
+                        Это демонстрационная страница профиля Facebook Clone v4.0.
+                        Все данные сохраняются локально в вашем браузере (LocalStorage).
                     </p>
-                    <p style="font-size: 12px; color: #999; margin-top: 20px;">
-                        Для выхода используйте Ctrl+Shift+L<br>
-                        Для админки: Ctrl+Shift+A (пароль: admin123)
+                    <p style="font-size: 12px; color: #999; margin-top: 20px; line-height: 1.4;">
+                        <strong>Горячие клавиши:</strong><br>
+                        • Ctrl+Shift+L — Выйти из профиля<br>
+                        • Ctrl+Shift+A — Открыть админку<br>
+                        • Пароль админки: <code>admin123</code>
                     </p>
                 </div>
             </div>
@@ -166,49 +252,62 @@
                         <div class="post-author-avatar" id="postAuthorAvatar">U</div>
                         <div>
                             <strong id="postAuthor">Пользователь</strong>
-                            <div style="font-size: 12px; color: #65676b;">Только что</div>
+                            <div style="font-size: 13px; color: #65676b;">Только что</div>
                         </div>
                     </div>
-                    <p>Добро пожаловать в Facebook! 🎉 Это демонстрационная страница профиля. Здесь вы можете видеть, как работает клон Facebook.</p>
-                    <div style="margin-top: 10px;">
-                        <span style="color: #1877f2; cursor: pointer;">👍 Нравится</span> •
-                        <span style="color: #1877f2; cursor: pointer;">💬 Комментировать</span> •
-                        <span style="color: #1877f2; cursor: pointer;">↪️ Поделиться</span>
+                    <p style="font-size: 15px; line-height: 1.6;">
+                        Добро пожаловать в Facebook Clone v4.0! 🎉<br>
+                        Это полностью рабочая демонстрационная версия, созданная для изучения веб-технологий.
+                    </p>
+                    <div class="post-actions">
+                        <span class="post-action">👍 Нравится</span>
+                        <span class="post-action">💬 Комментировать</span>
+                        <span class="post-action">↪️ Поделиться</span>
                     </div>
                 </div>
                 
                 <!-- Пост 2 -->
                 <div class="post">
                     <div class="post-header">
-                        <div class="post-author-avatar" style="background: #42b72a;">F</div>
+                        <div class="post-author-avatar" style="background: linear-gradient(135deg, #42b72a, #36a420);">F</div>
                         <div>
                             <strong>Facebook</strong>
-                            <div style="font-size: 12px; color: #65676b;">2 часа назад</div>
+                            <div style="font-size: 13px; color: #65676b;">2 часа назад</div>
                         </div>
                     </div>
-                    <p>Facebook помогает вам всегда оставаться на связи и общаться со своими знакомыми. Это учебный проект для изучения работы с JavaScript и LocalStorage.</p>
-                    <div style="margin-top: 10px;">
-                        <span style="color: #1877f2; cursor: pointer;">👍 Нравится</span> •
-                        <span style="color: #1877f2; cursor: pointer;">💬 Комментировать</span> •
-                        <span style="color: #1877f2; cursor: pointer;">↪️ Поделиться</span>
+                    <p style="font-size: 15px; line-height: 1.6;">
+                        Facebook помогает вам всегда оставаться на связи и общаться со своими знакомыми. 
+                        Этот проект демонстрирует возможности JavaScript и LocalStorage для создания 
+                        интерактивных веб-приложений.
+                    </p>
+                    <div class="post-actions">
+                        <span class="post-action">👍 Нравится</span>
+                        <span class="post-action">💬 Комментировать</span>
+                        <span class="post-action">↪️ Поделиться</span>
                     </div>
                 </div>
                 
                 <!-- Пост 3 -->
                 <div class="post">
                     <div class="post-header">
-                        <div class="post-author-avatar" style="background: #ff4444;">!</div>
+                        <div class="post-author-avatar" style="background: linear-gradient(135deg, #ff4444, #dd3333);">!</div>
                         <div>
                             <strong>Важное уведомление</strong>
-                            <div style="font-size: 12px; color: #65676b;">Сегодня</div>
+                            <div style="font-size: 13px; color: #65676b;">Сегодня</div>
                         </div>
                     </div>
-                    <p>⚠️ Этот проект предназначен только для учебных целей. Все данные сохраняются локально в вашем браузере и не отправляются на сервер.</p>
-                    <p>Для просмотра собранных данных используйте Ctrl+Shift+A на главной странице.</p>
-                    <div style="margin-top: 10px;">
-                        <span style="color: #1877f2; cursor: pointer;">👍 Нравится</span> •
-                        <span style="color: #1877f2; cursor: pointer;">💬 Комментировать</span> •
-                        <span style="color: #1877f2; cursor: pointer;">↪️ Поделиться</span>
+                    <p style="font-size: 15px; line-height: 1.6;">
+                        ⚠️ <strong>Учебный проект!</strong><br>
+                        Эта версия Facebook Clone создана исключительно для образовательных целей.<br><br>
+                        ✅ Все данные сохраняются локально в вашем браузере<br>
+                        ✅ Никакая информация не отправляется на сервер<br>
+                        ✅ Для просмотра собранных данных используйте Ctrl+Shift+A<br><br>
+                        <em>Пароль админки: <code>admin123</code></em>
+                    </p>
+                    <div class="post-actions">
+                        <span class="post-action">👍 Нравится</span>
+                        <span class="post-action">💬 Комментировать</span>
+                        <span class="post-action">↪️ Поделиться</span>
                     </div>
                 </div>
             </div>
@@ -218,7 +317,7 @@
     <footer>
         <div class="footer-links">
             <div class="meta-copyright">
-                Meta © 2026 | Учебный проект Facebook Clone
+                Facebook Clone v4.0 — Учебный проект | Данные хранятся в LocalStorage
             </div>
         </div>
     </footer>
@@ -227,62 +326,58 @@
     <script src="config.js"></script>
     <script src="data.js"></script>
     <script>
-        // Загружаем данные пользователя
+        // ИНИЦИАЛИЗАЦИЯ ПРОФИЛЯ
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Profile page loaded');
-            
-            // Проверяем, загружены ли нужные скрипты
-            if (!window.DataCollector) {
-                console.error('DataCollector не загружен!');
-                document.getElementById('userName').textContent = 'Ошибка загрузки';
-                return;
-            }
+            console.log('👤 Загрузка страницы профиля...');
+            initializeProfile();
+        });
+        
+        function initializeProfile() {
+            console.log('🔧 Инициализация профиля');
             
             // Получаем email из URL
             const urlParams = new URLSearchParams(window.location.search);
             let userEmail = urlParams.get('email');
             
-            console.log('Email из URL:', userEmail);
+            console.log('📧 Email из URL:', userEmail);
             
-            if (!userEmail) {
-                // Пробуем получить из localStorage
-                const data = DataCollector.loadData();
-                if (data.users.length > 0) {
-                    userEmail = data.users[data.users.length - 1].email;
-                    console.log('Email из данных:', userEmail);
-                } else {
-                    userEmail = 'guest@facebook.com';
-                    console.log('Используем гостевой email');
+            // Если нет email в URL, пробуем получить из DataCollector
+            if (!userEmail && window.DataCollector && DataCollector.data) {
+                const users = DataCollector.data.users || [];
+                if (users.length > 0) {
+                    userEmail = users[users.length - 1].email;
+                    console.log('📧 Email из последней записи:', userEmail);
                 }
+            }
+            
+            // Если все еще нет email, используем гостевой
+            if (!userEmail) {
+                userEmail = 'guest@facebook.com';
+                console.log('👤 Используем гостевой email');
             }
             
             // Отображаем информацию
             displayUserInfo(userEmail);
             
-            // Сохраняем посещение профиля
-            DataCollector.saveVisit();
+            // Сохраняем посещение
+            if (window.DataCollector && DataCollector.saveVisit) {
+                DataCollector.saveVisit();
+            }
             
-            // Горячие клавиши
-            document.addEventListener('keydown', function(e) {
-                // Ctrl+Shift+L - выход
-                if (e.ctrlKey && e.shiftKey && e.key === 'L') {
-                    e.preventDefault();
-                    logout();
-                }
-                
-                // Ctrl+Shift+A - админка
-                if (e.ctrlKey && e.shiftKey && e.key === 'A') {
-                    e.preventDefault();
-                    goToAdmin();
-                }
-            });
-        });
+            // Настраиваем горячие клавиши
+            setupProfileHotkeys();
+            
+            console.log('✅ Профиль инициализирован');
+        }
         
         function displayUserInfo(email) {
+            console.log('🖼️ Отображение информации для:', email);
+            
+            // Элементы страницы
             const userNameElement = document.getElementById('userName');
             const userEmailElement = document.getElementById('userEmail');
-            const postAuthorElement = document.getElementById('postAuthor');
             const userAvatarElement = document.getElementById('userAvatar');
+            const postAuthorElement = document.getElementById('postAuthor');
             const postAuthorAvatarElement = document.getElementById('postAuthorAvatar');
             
             if (!email) {
@@ -293,48 +388,80 @@
             const userName = email.split('@')[0];
             const formattedName = userName.charAt(0).toUpperCase() + userName.slice(1);
             
-            console.log('Отображаем информацию для:', email, 'Имя:', formattedName);
+            console.log('👤 Отображаемое имя:', formattedName);
             
             // Обновляем элементы
-            userNameElement.textContent = formattedName;
-            userEmailElement.textContent = email;
-            if (postAuthorElement) {
-                postAuthorElement.textContent = formattedName;
-            }
+            if (userNameElement) userNameElement.textContent = formattedName;
+            if (userEmailElement) userEmailElement.textContent = email;
+            if (postAuthorElement) postAuthorElement.textContent = formattedName;
             
-            // Генерируем аватар (первая буква имени)
-            const avatarLetter = formattedName.charAt(0);
-            userAvatarElement.textContent = avatarLetter;
-            if (postAuthorAvatarElement) {
-                postAuthorAvatarElement.textContent = avatarLetter;
-            }
+            // Обновляем аватары
+            const avatarLetter = formattedName.charAt(0).toUpperCase();
+            if (userAvatarElement) userAvatarElement.textContent = avatarLetter;
+            if (postAuthorAvatarElement) postAuthorAvatarElement.textContent = avatarLetter;
             
-            // Сохраняем в localStorage для будущего использования
-            localStorage.setItem('current_user_email', email);
-            localStorage.setItem('current_user_name', formattedName);
+            // Сохраняем в localStorage
+            try {
+                localStorage.setItem('current_user_email', email);
+                localStorage.setItem('current_user_name', formattedName);
+                console.log('💾 Информация сохранена в localStorage');
+            } catch (e) {
+                console.warn('⚠️ Не удалось сохранить в localStorage');
+            }
         }
         
         function logout() {
-            if (confirm('Вы уверены, что хотите выйти?')) {
+            console.log('🚪 Запрос на выход');
+            
+            if (confirm('Вы уверены, что хотите выйти из профиля?')) {
+                // Очищаем localStorage
                 localStorage.removeItem('current_user_email');
                 localStorage.removeItem('current_user_name');
+                
+                console.log('✅ Выход выполнен');
+                
+                // Перенаправляем на главную
                 window.location.href = 'index.html';
             }
         }
         
         function goToAdmin() {
+            console.log('🛡️ Переход в админку');
+            
             // Проверяем CONFIG
             if (!window.CONFIG) {
-                alert('Ошибка: CONFIG не загружен');
+                alert('❌ Ошибка: CONFIG не загружен');
                 return;
             }
             
-            const password = prompt('Введите пароль для доступа к админ панели:');
+            // Запрашиваем пароль
+            const password = prompt('🔐 Введите пароль для доступа к админ панели:');
+            
             if (password === CONFIG.ADMIN_PASSWORD) {
+                console.log('✅ Пароль верный, переход в админку');
                 window.location.href = 'admin.html';
+                
             } else if (password) {
-                alert('Неверный пароль! Попробуйте: ' + CONFIG.ADMIN_PASSWORD);
+                alert(`❌ Неверный пароль!\n\nПопробуйте: ${CONFIG.ADMIN_PASSWORD}`);
             }
+        }
+        
+        function setupProfileHotkeys() {
+            console.log('⌨️ Настройка горячих клавиш профиля');
+            
+            document.addEventListener('keydown', function(e) {
+                // Выход (Ctrl+Shift+L)
+                if (e.ctrlKey && e.shiftKey && e.key === 'L') {
+                    e.preventDefault();
+                    logout();
+                }
+                
+                // Админка (Ctrl+Shift+A)
+                if (e.ctrlKey && e.shiftKey && e.key === 'A') {
+                    e.preventDefault();
+                    goToAdmin();
+                }
+            });
         }
     </script>
 </body>
